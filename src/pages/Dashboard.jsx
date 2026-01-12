@@ -11,7 +11,6 @@ import {
   MessageCircle, Calendar, ArrowRight, Plus, ArrowLeft
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import moment from "moment";
 import ConsultaForm from "@/components/crm/ConsultaForm";
