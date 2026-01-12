@@ -16,6 +16,8 @@ const NAV_ITEMS = [
   { name: "Hoy", icon: Calendar, page: "Hoy" },
   { name: "Contactos", icon: Users, page: "Contactos" },
   { name: "Plantillas", icon: MessageSquare, page: "Plantillas" },
+  { name: "Listas WhatsApp", icon: MessageSquare, page: "ListasWhatsApp" },
+  { name: "Ajustes", icon: Users, page: "Ajustes" },
 ];
 
 export default function Layout({ children, currentPageName }) {

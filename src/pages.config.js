@@ -8,6 +8,8 @@ import Pipeline from './pages/Pipeline';
 import Plantillas from './pages/Plantillas';
 import Reportes from './pages/Reportes';
 import Variables from './pages/Variables';
+import ListasWhatsApp from './pages/ListasWhatsApp';
+import EditorListaWhatsApp from './pages/EditorListaWhatsApp';
 import __Layout from './Layout.jsx';
 
 
@@ -22,6 +24,8 @@ export const PAGES = {
     "Plantillas": Plantillas,
     "Reportes": Reportes,
     "Variables": Variables,
+    "ListasWhatsApp": ListasWhatsApp,
+    "EditorListaWhatsApp": EditorListaWhatsApp,
 }
 
 export const pagesConfig = {
