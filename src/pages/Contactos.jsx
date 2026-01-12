@@ -25,6 +25,7 @@ export default function Contactos() {
   const [filtroCanal, setFiltroCanal] = useState("todos");
   const [formData, setFormData] = useState({
     nombre: "",
+    apellido: "",
     whatsapp: "",
     numeroTelefono: "",
     ciudad: "",
@@ -74,6 +75,7 @@ export default function Contactos() {
   const resetForm = () => {
     setFormData({
       nombre: "",
+      apellido: "",
       whatsapp: "",
       numeroTelefono: "",
       ciudad: "",
@@ -89,6 +91,7 @@ export default function Contactos() {
     setSelectedContacto(contacto);
     setFormData({
       nombre: contacto.nombre || "",
+      apellido: contacto.apellido || "",
       whatsapp: contacto.whatsapp || "",
       numeroTelefono: contacto.numeroTelefono || "",
       ciudad: contacto.ciudad || "",
@@ -214,7 +217,7 @@ export default function Contactos() {
                         <User className="w-5 h-5 text-slate-500" />
                       </div>
                       <div>
-                        <p className="font-medium text-slate-900">{contacto.nombre}</p>
+                        <p className="font-medium text-slate-900">{contacto.nombre} {contacto.apellido}</p>
                         {contacto.tags?.length > 0 && (
                           <div className="flex gap-1 mt-1">
                             {contacto.tags.slice(0, 2).map((tag, i) => (
@@ -315,13 +318,23 @@ export default function Contactos() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Nombre *</Label>
-              <Input
-                value={formData.nombre}
-                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                placeholder="Juan Pérez"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nombre *</Label>
+                <Input
+                  value={formData.nombre}
+                  onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  placeholder="Juan"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Apellido</Label>
+                <Input
+                  value={formData.apellido}
+                  onChange={(e) => setFormData({ ...formData, apellido: e.target.value })}
+                  placeholder="Pérez"
+                />
+              </div>
             </div>
             <div className="space-y-2">
               <Label>WhatsApp *</Label>

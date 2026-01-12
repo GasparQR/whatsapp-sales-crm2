@@ -39,6 +39,7 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
 
   const [newContact, setNewContact] = useState({
     nombre: "",
+    apellido: "",
     whatsapp: "",
     ciudad: "",
     canalOrigen: ""
@@ -94,7 +95,7 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
     setContactos([created, ...contactos]);
     setFormData({ ...formData, contactoId: created.id });
     setShowNewContact(false);
-    setNewContact({ nombre: "", whatsapp: "", ciudad: "", canalOrigen: "" });
+    setNewContact({ nombre: "", apellido: "", whatsapp: "", ciudad: "", canalOrigen: "" });
     toast.success("Contacto creado");
     setLoading(false);
   };
@@ -175,7 +176,7 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
                     <SelectContent>
                       {contactos.map(c => (
                         <SelectItem key={c.id} value={c.id}>
-                          {c.nombre} - {c.whatsapp}
+                          {c.nombre} {c.apellido} - {c.whatsapp}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -183,12 +184,12 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
                 </div>
 
                 {selectedContact && (
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <p className="font-semibold">{selectedContact.nombre}</p>
-                    <p className="text-sm text-slate-500">{selectedContact.whatsapp}</p>
-                    {selectedContact.ciudad && <p className="text-sm text-slate-500">{selectedContact.ciudad}</p>}
-                  </div>
-                )}
+                   <div className="bg-slate-50 rounded-xl p-4">
+                     <p className="font-semibold">{selectedContact.nombre} {selectedContact.apellido}</p>
+                     <p className="text-sm text-slate-500">{selectedContact.whatsapp}</p>
+                     {selectedContact.ciudad && <p className="text-sm text-slate-500">{selectedContact.ciudad}</p>}
+                   </div>
+                 )}
 
                 <Button 
                   type="button" 
@@ -203,16 +204,24 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
             ) : (
               <div className="space-y-4 border rounded-xl p-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Nombre *</Label>
-                    <Input 
-                      value={newContact.nombre}
-                      onChange={(e) => setNewContact({ ...newContact, nombre: e.target.value })}
-                      placeholder="Juan Pérez"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>WhatsApp *</Label>
+                   <div className="space-y-2">
+                     <Label>Nombre *</Label>
+                     <Input 
+                       value={newContact.nombre}
+                       onChange={(e) => setNewContact({ ...newContact, nombre: e.target.value })}
+                       placeholder="Juan"
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <Label>Apellido</Label>
+                     <Input 
+                       value={newContact.apellido}
+                       onChange={(e) => setNewContact({ ...newContact, apellido: e.target.value })}
+                       placeholder="Pérez"
+                     />
+                   </div>
+                   <div className="space-y-2">
+                     <Label>WhatsApp *</Label>
                     <Input 
                       value={newContact.whatsapp}
                       onChange={(e) => setNewContact({ ...newContact, whatsapp: e.target.value })}
