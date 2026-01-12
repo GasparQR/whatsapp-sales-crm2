@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Edit, Phone, MessageCircle, MapPin, User, Tag, ArrowLeft } from "lucide-react";
+import { Plus, Search, Edit, Phone, MessageCircle, MapPin, User, Tag, ArrowLeft, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import moment from "moment";
 
@@ -60,6 +60,14 @@ export default function Contactos() {
       queryClient.invalidateQueries({ queryKey: ['contactos'] });
       toast.success("Contacto actualizado");
       resetForm();
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Contacto.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contactos'] });
+      toast.success("Contacto eliminado");
     }
   });
 
@@ -268,6 +276,18 @@ export default function Contactos() {
                         }}
                       >
                         <MessageCircle className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                        onClick={() => {
+                          if (window.confirm("¿Estás seguro de eliminar este contacto?")) {
+                            deleteMutation.mutate(contacto.id);
+                          }
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>

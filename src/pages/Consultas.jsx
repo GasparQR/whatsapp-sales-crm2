@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { 
   Plus, Search, MessageCircle, Calendar, CheckCircle2, XCircle, 
-  MoreHorizontal, Filter, Phone, ArrowUpDown, ArrowLeft
+  MoreHorizontal, Filter, Phone, ArrowUpDown, ArrowLeft, Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import moment from "moment";
@@ -57,6 +57,14 @@ export default function Consultas() {
     mutationFn: ({ id, data }) => base44.entities.Consulta.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['consultas-list'] });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => base44.entities.Consulta.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['consultas-list'] });
+      toast.success("Consulta eliminada");
     }
   });
 
@@ -354,6 +362,18 @@ export default function Consultas() {
                             >
                               <XCircle className="w-4 h-4 mr-2" />
                               Perdido - Compró otro
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                if (window.confirm("¿Estás seguro de eliminar esta consulta?")) {
+                                  deleteMutation.mutate(consulta.id);
+                                }
+                              }}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Eliminar consulta
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
