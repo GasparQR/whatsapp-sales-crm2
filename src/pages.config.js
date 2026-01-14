@@ -10,8 +10,8 @@ import Pipeline from './pages/Pipeline';
 import Plantillas from './pages/Plantillas';
 import Reportes from './pages/Reportes';
 import Variables from './pages/Variables';
-import Ventas from './pages/Ventas';
 import VentaDetalle from './pages/VentaDetalle';
+import Ventas from './pages/Ventas';
 import VentasDashboard from './pages/VentasDashboard';
 import Proveedores from './pages/Proveedores';
 import ProveedorDetalle from './pages/ProveedorDetalle';
@@ -31,8 +31,8 @@ export const PAGES = {
     "Plantillas": Plantillas,
     "Reportes": Reportes,
     "Variables": Variables,
-    "Ventas": Ventas,
     "VentaDetalle": VentaDetalle,
+    "Ventas": Ventas,
     "VentasDashboard": VentasDashboard,
     "Proveedores": Proveedores,
     "ProveedorDetalle": ProveedorDetalle,

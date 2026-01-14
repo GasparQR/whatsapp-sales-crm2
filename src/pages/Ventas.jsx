@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Eye, Search, Filter, DollarSign, TrendingUp, Package } from "lucide-react";
+import { ArrowLeft, Eye, Search, Filter, DollarSign, TrendingUp, Package, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import VentaForm from "@/components/ventas/VentaForm";
 
 const MARKETPLACES = ["WhatsApp", "Instagram", "MercadoLibre", "Local", "Otro"];
 
@@ -19,8 +20,10 @@ export default function Ventas() {
   const [search, setSearch] = useState("");
   const [filterMarketplace, setFilterMarketplace] = useState("Todos");
   const [filterProveedor, setFilterProveedor] = useState("Todos");
+  const [filterEstado, setFilterEstado] = useState("Todos");
   const [fechaDesde, setFechaDesde] = useState("");
   const [fechaHasta, setFechaHasta] = useState("");
+  const [showVentaForm, setShowVentaForm] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -39,16 +42,18 @@ export default function Ventas() {
   const ventasFiltradas = ventas.filter(venta => {
     const matchSearch = !search || 
       venta.codigo?.toLowerCase().includes(search.toLowerCase()) ||
-      venta.nombre?.toLowerCase().includes(search.toLowerCase()) ||
-      venta.modelo?.toLowerCase().includes(search.toLowerCase());
+      venta.nombreSnapshot?.toLowerCase().includes(search.toLowerCase()) ||
+      venta.modelo?.toLowerCase().includes(search.toLowerCase()) ||
+      venta.productoSnapshot?.toLowerCase().includes(search.toLowerCase());
     
     const matchMarketplace = filterMarketplace === "Todos" || venta.marketplace === filterMarketplace;
     const matchProveedor = filterProveedor === "Todos" || venta.proveedorNombreSnapshot === filterProveedor;
+    const matchEstado = filterEstado === "Todos" || venta.estado === filterEstado;
     
     const matchFechaDesde = !fechaDesde || new Date(venta.fecha) >= new Date(fechaDesde);
     const matchFechaHasta = !fechaHasta || new Date(venta.fecha) <= new Date(fechaHasta);
 
-    return matchSearch && matchMarketplace && matchProveedor && matchFechaDesde && matchFechaHasta;
+    return matchSearch && matchMarketplace && matchProveedor && matchEstado && matchFechaDesde && matchFechaHasta;
   });
 
   const totalVentas = ventasFiltradas.reduce((acc, v) => acc + (v.venta || 0), 0);
@@ -70,12 +75,18 @@ export default function Ventas() {
               <h1 className="text-2xl font-bold text-slate-900">Ventas</h1>
               <p className="text-slate-500">{ventasFiltradas.length} ventas registradas</p>
             </div>
-            <Link to={createPageUrl("VentasDashboard")}>
-              <Button variant="outline" className="gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Ver Dashboard
+            <div className="flex gap-2">
+              <Button onClick={() => setShowVentaForm(true)} className="gap-2">
+                <Plus className="w-4 h-4" />
+                Nueva Venta
               </Button>
-            </Link>
+              <Link to={createPageUrl("VentasDashboard")}>
+                <Button variant="outline" className="gap-2">
+                  <TrendingUp className="w-4 h-4" />
+                  Dashboard
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -125,7 +136,7 @@ export default function Ventas() {
         {/* Filtros */}
         <Card>
           <CardContent className="p-4">
-            <div className="grid md:grid-cols-5 gap-4">
+            <div className="grid md:grid-cols-6 gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
@@ -135,6 +146,17 @@ export default function Ventas() {
                   className="pl-9"
                 />
               </div>
+              <Select value={filterEstado} onValueChange={setFilterEstado}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos los estados</SelectItem>
+                  <SelectItem value="Borrador">Borrador</SelectItem>
+                  <SelectItem value="Finalizada">Finalizada</SelectItem>
+                  <SelectItem value="Anulada">Anulada</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={filterMarketplace} onValueChange={setFilterMarketplace}>
                 <SelectTrigger>
                   <SelectValue />
@@ -180,9 +202,10 @@ export default function Ventas() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Código</TableHead>
+                    <TableHead>Estado</TableHead>
                     <TableHead>Fecha</TableHead>
                     <TableHead>Cliente</TableHead>
-                    <TableHead>Modelo</TableHead>
+                    <TableHead>Producto</TableHead>
                     <TableHead>Proveedor</TableHead>
                     <TableHead>Canal</TableHead>
                     <TableHead className="text-right">Costo</TableHead>
@@ -200,60 +223,90 @@ export default function Ventas() {
                     </TableRow>
                   ) : ventasFiltradas.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={10} className="text-center py-8 text-slate-500">
+                      <TableCell colSpan={11} className="text-center py-8 text-slate-500">
                         No hay ventas registradas
                       </TableCell>
                     </TableRow>
                   ) : (
-                    ventasFiltradas.map(venta => (
-                      <TableRow key={venta.id}>
-                        <TableCell className="font-medium">{venta.codigo}</TableCell>
-                        <TableCell>{venta.fecha ? format(new Date(venta.fecha), 'dd/MM/yyyy') : '-'}</TableCell>
-                        <TableCell>{venta.nombre}</TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{venta.modelo}</p>
-                            {(venta.capacidad || venta.color) && (
-                              <p className="text-xs text-slate-500">
-                                {[venta.capacidad, venta.color].filter(Boolean).join(' · ')}
-                              </p>
+                    ventasFiltradas.map(venta => {
+                      const estadoColors = {
+                        Borrador: "bg-amber-100 text-amber-700",
+                        Finalizada: "bg-green-100 text-green-700",
+                        Anulada: "bg-slate-100 text-slate-600"
+                      };
+                      
+                      return (
+                        <TableRow key={venta.id}>
+                          <TableCell className="font-medium">{venta.codigo}</TableCell>
+                          <TableCell>
+                            <Badge className={estadoColors[venta.estado] || ""}>
+                              {venta.estado}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{venta.fecha ? format(new Date(venta.fecha), 'dd/MM/yyyy') : '-'}</TableCell>
+                          <TableCell>{venta.nombreSnapshot}</TableCell>
+                          <TableCell>
+                            <div>
+                              <p className="font-medium">{venta.productoSnapshot || venta.modelo}</p>
+                              {(venta.capacidad || venta.color) && (
+                                <p className="text-xs text-slate-500">
+                                  {[venta.capacidad, venta.color].filter(Boolean).join(' · ')}
+                                </p>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {venta.proveedorId ? (
+                              <Link to={createPageUrl(`ProveedorDetalle?id=${venta.proveedorId}`)} className="hover:underline text-blue-600">
+                                {venta.proveedorNombreSnapshot}
+                              </Link>
+                            ) : (
+                              <span>{venta.proveedorNombreSnapshot || venta.proveedorTexto}</span>
                             )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {venta.proveedorId ? (
-                            <Link to={createPageUrl(`ProveedorDetalle?id=${venta.proveedorId}`)} className="hover:underline text-blue-600">
-                              {venta.proveedorNombreSnapshot}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{venta.marketplace}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {venta.costo ? `${venta.moneda || 'USD'} ${venta.costo.toFixed(2)}` : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {venta.venta ? `${venta.moneda || 'USD'} ${venta.venta.toFixed(2)}` : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {venta.ganancia !== null && venta.ganancia !== undefined ? (
+                              <span className={venta.ganancia >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                                {venta.moneda || 'USD'} {venta.ganancia.toFixed(2)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">Pendiente</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Link to={createPageUrl(`VentaDetalle?id=${venta.id}`)}>
+                              <Button variant="ghost" size="icon">
+                                <Eye className="w-4 h-4" />
+                              </Button>
                             </Link>
-                          ) : (
-                            <span>{venta.proveedorNombreSnapshot}</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{venta.marketplace}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">US$ {venta.costo?.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">US$ {venta.venta?.toFixed(2)}</TableCell>
-                        <TableCell className="text-right">
-                          <span className={venta.ganancia >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
-                            US$ {venta.ganancia?.toFixed(2)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Link to={createPageUrl(`VentaDetalle?id=${venta.id}`)}>
-                            <Button variant="ghost" size="icon">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </Link>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
                   )}
                 </TableBody>
               </Table>
             </div>
           </CardContent>
         </Card>
+
+        <VentaForm
+          open={showVentaForm}
+          onOpenChange={setShowVentaForm}
+          consulta={null}
+          onVentaCreada={() => {
+            queryClient.invalidateQueries({ queryKey: ['ventas'] });
+          }}
+        />
       </div>
     </div>
   );

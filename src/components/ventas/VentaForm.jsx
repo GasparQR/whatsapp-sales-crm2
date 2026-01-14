@@ -13,16 +13,19 @@ import { createPageUrl } from "@/utils";
 
 const MARKETPLACES = ["WhatsApp", "Instagram", "MercadoLibre", "Local", "Otro"];
 
-export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada }) {
+export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada, ventaExistente = null }) {
   const [formData, setFormData] = useState({
+    estado: "Borrador",
     fecha: new Date().toISOString().split('T')[0],
     contactoId: "",
     consultaId: "",
-    nombre: "",
+    nombreSnapshot: "",
+    productoSnapshot: "",
     modelo: "",
     capacidad: "",
     color: "",
     proveedorId: "",
+    proveedorTexto: "",
     proveedorNombreSnapshot: "",
     marketplace: "WhatsApp",
     porUsuarioId: "",
@@ -30,11 +33,12 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada 
     comision: 0,
     venta: "",
     canje: 0,
+    moneda: "USD",
     notas: ""
   });
 
-  const [gananciaCalculada, setGananciaCalculada] = useState(0);
-  const [searchProveedor, setSearchProveedor] = useState("");
+  const [gananciaCalculada, setGananciaCalculada] = useState(null);
+  const [modoGuardado, setModoGuardado] = useState("borrador"); // "borrador" o "finalizada"
 
   const { data: proveedores = [] } = useQuery({
     queryKey: ['proveedores-activos'],
@@ -46,16 +50,27 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada 
   });
 
   useEffect(() => {
-    if (consulta && open) {
+    if (ventaExistente && open) {
       setFormData({
+        ...ventaExistente,
+        costo: ventaExistente.costo || "",
+        venta: ventaExistente.venta || "",
+        comision: ventaExistente.comision || 0,
+        canje: ventaExistente.canje || 0
+      });
+    } else if (consulta && open) {
+      setFormData({
+        estado: "Borrador",
         fecha: new Date().toISOString().split('T')[0],
         contactoId: consulta.contactoId || "",
         consultaId: consulta.id || "",
-        nombre: consulta.contactoNombre || "",
+        nombreSnapshot: consulta.contactoNombre || "",
+        productoSnapshot: consulta.productoConsultado + (consulta.variante ? ` ${consulta.variante}` : ""),
         modelo: consulta.productoConsultado || "",
         capacidad: consulta.variante || "",
         color: "",
         proveedorId: "",
+        proveedorTexto: consulta.fuentePrecio || "",
         proveedorNombreSnapshot: consulta.fuentePrecio || "",
         marketplace: consulta.canalOrigen || "WhatsApp",
         porUsuarioId: consulta.created_by || "",
@@ -63,84 +78,123 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada 
         comision: 0,
         venta: consulta.precioCotizado || "",
         canje: 0,
+        moneda: consulta.moneda || "USD",
         notas: ""
       });
-      setSearchProveedor(consulta.fuentePrecio || "");
     }
-  }, [consulta, open]);
+  }, [consulta, ventaExistente, open]);
 
   useEffect(() => {
-    const costo = parseFloat(formData.costo) || 0;
-    const venta = parseFloat(formData.venta) || 0;
-    const comision = parseFloat(formData.comision) || 0;
-    const canje = parseFloat(formData.canje) || 0;
-    
-    const ganancia = venta - costo - comision + canje;
-    setGananciaCalculada(ganancia);
-  }, [formData.costo, formData.venta, formData.comision, formData.canje]);
-
-  const handleSubmit = async () => {
-    if (!formData.costo || !formData.venta) {
-      toast.error("Costo y precio de venta son obligatorios");
-      return;
-    }
-
-    if (!formData.proveedorId && !formData.proveedorNombreSnapshot) {
-      toast.error("Selecciona un proveedor o ingresa un nombre");
-      return;
-    }
-
     const costo = parseFloat(formData.costo);
     const venta = parseFloat(formData.venta);
     const comision = parseFloat(formData.comision) || 0;
     const canje = parseFloat(formData.canje) || 0;
+    
+    if (!isNaN(costo) && !isNaN(venta)) {
+      const ganancia = venta - costo - comision + canje;
+      setGananciaCalculada(ganancia);
+    } else {
+      setGananciaCalculada(null);
+    }
+  }, [formData.costo, formData.venta, formData.comision, formData.canje]);
 
-    if (costo < 0 || venta <= 0 || comision < 0 || canje < 0) {
-      toast.error("Los montos deben ser válidos");
+  const handleSubmit = async (finalizar = false) => {
+    // Validar nombre
+    if (!formData.nombreSnapshot) {
+      toast.error("El nombre del cliente es obligatorio");
       return;
     }
 
-    try {
-      // Obtener el último código para generar el siguiente
-      const ventas = await base44.entities.Venta.list("-created_date", 1);
-      let nuevoCodigo = `V-${new Date().getFullYear()}-000001`;
-      
-      if (ventas.length > 0 && ventas[0].codigo) {
-        const ultimoCodigo = ventas[0].codigo;
-        const partes = ultimoCodigo.split('-');
-        if (partes.length === 3) {
-          const numero = parseInt(partes[2]) + 1;
-          nuevoCodigo = `V-${new Date().getFullYear()}-${numero.toString().padStart(6, '0')}`;
-        }
+    // Validaciones solo si se va a finalizar
+    if (finalizar) {
+      if (!formData.venta) {
+        toast.error("Precio de venta es obligatorio para finalizar");
+        return;
       }
+      if (!formData.costo) {
+        toast.error("Costo es obligatorio para finalizar");
+        return;
+      }
+      if (!formData.proveedorId && !formData.proveedorTexto) {
+        toast.error("Proveedor es obligatorio para finalizar");
+        return;
+      }
+    }
 
-      const ventaData = {
-        codigo: nuevoCodigo,
-        fecha: formData.fecha,
-        contactoId: formData.contactoId,
-        consultaId: formData.consultaId,
-        nombre: formData.nombre,
-        modelo: formData.modelo,
-        capacidad: formData.capacidad,
-        color: formData.color,
-        proveedorId: formData.proveedorId || null,
-        proveedorNombreSnapshot: formData.proveedorNombreSnapshot,
-        marketplace: formData.marketplace,
-        porUsuarioId: formData.porUsuarioId,
-        costo: costo,
-        comision: comision,
-        venta: venta,
-        canje: canje,
-        ganancia: gananciaCalculada,
-        notas: formData.notas
-      };
+    const costo = formData.costo ? parseFloat(formData.costo) : null;
+    const venta = formData.venta ? parseFloat(formData.venta) : null;
+    const comision = parseFloat(formData.comision) || 0;
+    const canje = parseFloat(formData.canje) || 0;
 
-      await base44.entities.Venta.create(ventaData);
-      toast.success("Venta registrada correctamente");
+    try {
+      let ventaData;
+      
+      if (ventaExistente) {
+        // Actualizar venta existente
+        ventaData = {
+          ...formData,
+          estado: finalizar ? "Finalizada" : formData.estado,
+          costo,
+          venta,
+          comision,
+          canje,
+          ganancia: gananciaCalculada,
+          proveedorNombreSnapshot: formData.proveedorId 
+            ? proveedores.find(p => p.id === formData.proveedorId)?.nombre 
+            : formData.proveedorTexto
+        };
+        
+        await base44.entities.Venta.update(ventaExistente.id, ventaData);
+        toast.success(finalizar ? "Venta finalizada" : "Venta actualizada");
+      } else {
+        // Crear nueva venta
+        const ventas = await base44.entities.Venta.list("-created_date", 1);
+        let nuevoCodigo = `V-${new Date().getFullYear()}-000001`;
+        
+        if (ventas.length > 0 && ventas[0].codigo) {
+          const ultimoCodigo = ventas[0].codigo;
+          const partes = ultimoCodigo.split('-');
+          if (partes.length === 3) {
+            const numero = parseInt(partes[2]) + 1;
+            nuevoCodigo = `V-${new Date().getFullYear()}-${numero.toString().padStart(6, '0')}`;
+          }
+        }
+
+        ventaData = {
+          codigo: nuevoCodigo,
+          estado: finalizar ? "Finalizada" : "Borrador",
+          fecha: formData.fecha,
+          contactoId: formData.contactoId || null,
+          consultaId: formData.consultaId || null,
+          nombreSnapshot: formData.nombreSnapshot,
+          productoSnapshot: formData.productoSnapshot,
+          modelo: formData.modelo,
+          capacidad: formData.capacidad,
+          color: formData.color,
+          proveedorId: formData.proveedorId || null,
+          proveedorTexto: formData.proveedorTexto,
+          proveedorNombreSnapshot: formData.proveedorId 
+            ? proveedores.find(p => p.id === formData.proveedorId)?.nombre 
+            : formData.proveedorTexto,
+          marketplace: formData.marketplace,
+          porUsuarioId: formData.porUsuarioId,
+          costo,
+          comision,
+          venta,
+          canje,
+          ganancia: gananciaCalculada,
+          moneda: formData.moneda,
+          notas: formData.notas
+        };
+
+        await base44.entities.Venta.create(ventaData);
+        toast.success(finalizar ? "Venta finalizada" : "Borrador guardado");
+      }
+      
       onVentaCreada?.();
       onOpenChange(false);
     } catch (error) {
-      toast.error("Error al registrar la venta");
+      toast.error("Error al guardar la venta");
       console.error(error);
     }
   };
@@ -151,7 +205,7 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <DollarSign className="w-5 h-5" />
-            Registrar Venta
+            {ventaExistente ? "Editar Venta" : "Registrar Venta"}
           </DialogTitle>
         </DialogHeader>
 
@@ -166,14 +220,27 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada 
               />
             </div>
             <div className="space-y-2">
-              <Label>Cliente</Label>
-              <Input value={formData.nombre} disabled className="bg-slate-50" />
+              <Label>Cliente *</Label>
+              <Input 
+                value={formData.nombreSnapshot} 
+                onChange={(e) => setFormData({ ...formData, nombreSnapshot: e.target.value })}
+                placeholder="Nombre del cliente"
+              />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Producto</Label>
+            <Input
+              value={formData.productoSnapshot}
+              onChange={(e) => setFormData({ ...formData, productoSnapshot: e.target.value })}
+              placeholder="Apple Watch Ultra 3 49mm Black Titanium"
+            />
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Modelo *</Label>
+              <Label>Modelo</Label>
               <Input
                 value={formData.modelo}
                 onChange={(e) => setFormData({ ...formData, modelo: e.target.value })}
@@ -242,8 +309,8 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada 
             </Select>
             {!formData.proveedorId && (
               <Input
-                value={formData.proveedorNombreSnapshot}
-                onChange={(e) => setFormData({ ...formData, proveedorNombreSnapshot: e.target.value })}
+                value={formData.proveedorTexto}
+                onChange={(e) => setFormData({ ...formData, proveedorTexto: e.target.value })}
                 placeholder="O escribe el nombre del proveedor"
                 className="mt-2"
               />
@@ -267,9 +334,26 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada 
             </Select>
           </div>
 
+          <div className="space-y-2">
+            <Label>Moneda</Label>
+            <Select
+              value={formData.moneda}
+              onValueChange={(val) => setFormData({ ...formData, moneda: val })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="USD">USD</SelectItem>
+                <SelectItem value="ARS">ARS</SelectItem>
+                <SelectItem value="USDT">USDT</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Costo *</Label>
+              <Label>Costo</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -279,7 +363,7 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada 
               />
             </div>
             <div className="space-y-2">
-              <Label>Precio de Venta *</Label>
+              <Label>Precio de Venta</Label>
               <Input
                 type="number"
                 step="0.01"
@@ -324,28 +408,39 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada 
           </div>
 
           {/* Ganancia calculada */}
-          <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <TrendingUp className={gananciaCalculada >= 0 ? "w-5 h-5 text-green-600" : "w-5 h-5 text-red-600"} />
-                <span className="font-semibold text-slate-700">Ganancia Calculada:</span>
+          {gananciaCalculada !== null ? (
+            <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className={gananciaCalculada >= 0 ? "w-5 h-5 text-green-600" : "w-5 h-5 text-red-600"} />
+                  <span className="font-semibold text-slate-700">Ganancia Calculada:</span>
+                </div>
+                <span className={`text-2xl font-bold ${gananciaCalculada >= 0 ? "text-green-600" : "text-red-600"}`}>
+                  {formData.moneda} {gananciaCalculada.toFixed(2)}
+                </span>
               </div>
-              <span className={`text-2xl font-bold ${gananciaCalculada >= 0 ? "text-green-600" : "text-red-600"}`}>
-                US$ {gananciaCalculada.toFixed(2)}
-              </span>
+              <p className="text-xs text-slate-500 mt-2">
+                Venta ({formData.venta || 0}) - Costo ({formData.costo || 0}) - Comisión ({formData.comision || 0}) + Canje ({formData.canje || 0})
+              </p>
             </div>
-            <p className="text-xs text-slate-500 mt-2">
-              Venta ({formData.venta || 0}) - Costo ({formData.costo || 0}) - Comisión ({formData.comision || 0}) + Canje ({formData.canje || 0})
-            </p>
-          </div>
+          ) : (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <p className="text-sm text-amber-700">
+                Ingresa costo y precio de venta para calcular la ganancia
+              </p>
+            </div>
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit}>
-            Registrar Venta
+          <Button variant="outline" onClick={() => handleSubmit(false)}>
+            Guardar Borrador
+          </Button>
+          <Button onClick={() => handleSubmit(true)}>
+            {ventaExistente ? "Actualizar y Finalizar" : "Finalizar Venta"}
           </Button>
         </DialogFooter>
       </DialogContent>
