@@ -10,6 +10,9 @@ import Pipeline from './pages/Pipeline';
 import Plantillas from './pages/Plantillas';
 import Reportes from './pages/Reportes';
 import Variables from './pages/Variables';
+import Ventas from './pages/Ventas';
+import VentaDetalle from './pages/VentaDetalle';
+import VentasDashboard from './pages/VentasDashboard';
 import __Layout from './Layout.jsx';
 
 
@@ -26,6 +29,9 @@ export const PAGES = {
     "Plantillas": Plantillas,
     "Reportes": Reportes,
     "Variables": Variables,
+    "Ventas": Ventas,
+    "VentaDetalle": VentaDetalle,
+    "VentasDashboard": VentasDashboard,
 }
 
 export const pagesConfig = {

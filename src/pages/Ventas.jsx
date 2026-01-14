@@ -1,0 +1,247 @@
+import { useState } from "react";
+import { base44 } from "@/api/base44Client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { createPageUrl } from "@/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Eye, Search, Filter, DollarSign, TrendingUp, Package } from "lucide-react";
+import { toast } from "sonner";
+import { format } from "date-fns";
+
+const MARKETPLACES = ["WhatsApp", "Instagram", "MercadoLibre", "Local", "Otro"];
+
+export default function Ventas() {
+  const [search, setSearch] = useState("");
+  const [filterMarketplace, setFilterMarketplace] = useState("Todos");
+  const [filterProveedor, setFilterProveedor] = useState("Todos");
+  const [fechaDesde, setFechaDesde] = useState("");
+  const [fechaHasta, setFechaHasta] = useState("");
+
+  const queryClient = useQueryClient();
+
+  const { data: ventas = [], isLoading } = useQuery({
+    queryKey: ['ventas'],
+    queryFn: () => base44.entities.Venta.list("-created_date")
+  });
+
+  const proveedoresUnicos = ["Todos", ...new Set(ventas.map(v => v.proveedor).filter(Boolean))];
+
+  const ventasFiltradas = ventas.filter(venta => {
+    const matchSearch = !search || 
+      venta.codigo?.toLowerCase().includes(search.toLowerCase()) ||
+      venta.nombre?.toLowerCase().includes(search.toLowerCase()) ||
+      venta.modelo?.toLowerCase().includes(search.toLowerCase());
+    
+    const matchMarketplace = filterMarketplace === "Todos" || venta.marketplace === filterMarketplace;
+    const matchProveedor = filterProveedor === "Todos" || venta.proveedor === filterProveedor;
+    
+    const matchFechaDesde = !fechaDesde || new Date(venta.fecha) >= new Date(fechaDesde);
+    const matchFechaHasta = !fechaHasta || new Date(venta.fecha) <= new Date(fechaHasta);
+
+    return matchSearch && matchMarketplace && matchProveedor && matchFechaDesde && matchFechaHasta;
+  });
+
+  const totalVentas = ventasFiltradas.reduce((acc, v) => acc + (v.venta || 0), 0);
+  const totalGanancia = ventasFiltradas.reduce((acc, v) => acc + (v.ganancia || 0), 0);
+
+  return (
+    <div className="min-h-screen bg-slate-50/50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div>
+          <Link to={createPageUrl("Home")}>
+            <Button variant="ghost" className="gap-2 mb-2 -ml-2">
+              <ArrowLeft className="w-4 h-4" />
+              Volver
+            </Button>
+          </Link>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">Ventas</h1>
+              <p className="text-slate-500">{ventasFiltradas.length} ventas registradas</p>
+            </div>
+            <Link to={createPageUrl("VentasDashboard")}>
+              <Button variant="outline" className="gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Ver Dashboard
+              </Button>
+            </Link>
+          </div>
+        </div>
+
+        {/* KPIs rápidos */}
+        <div className="grid md:grid-cols-3 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Package className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Cantidad</p>
+                  <p className="text-2xl font-bold">{ventasFiltradas.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center">
+                  <DollarSign className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Total Ventas</p>
+                  <p className="text-2xl font-bold">US$ {totalVentas.toFixed(2)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-600">Ganancia Total</p>
+                  <p className="text-2xl font-bold text-green-600">US$ {totalGanancia.toFixed(2)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filtros */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="grid md:grid-cols-5 gap-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Input
+                  placeholder="Buscar..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={filterMarketplace} onValueChange={setFilterMarketplace}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Todos">Todos los canales</SelectItem>
+                  {MARKETPLACES.map(m => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterProveedor} onValueChange={setFilterProveedor}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {proveedoresUnicos.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                type="date"
+                placeholder="Desde"
+                value={fechaDesde}
+                onChange={(e) => setFechaDesde(e.target.value)}
+              />
+              <Input
+                type="date"
+                placeholder="Hasta"
+                value={fechaHasta}
+                onChange={(e) => setFechaHasta(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tabla */}
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Modelo</TableHead>
+                    <TableHead>Proveedor</TableHead>
+                    <TableHead>Canal</TableHead>
+                    <TableHead className="text-right">Costo</TableHead>
+                    <TableHead className="text-right">Venta</TableHead>
+                    <TableHead className="text-right">Ganancia</TableHead>
+                    <TableHead></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={10} className="text-center py-8 text-slate-500">
+                        Cargando...
+                      </TableCell>
+                    </TableRow>
+                  ) : ventasFiltradas.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={10} className="text-center py-8 text-slate-500">
+                        No hay ventas registradas
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    ventasFiltradas.map(venta => (
+                      <TableRow key={venta.id}>
+                        <TableCell className="font-medium">{venta.codigo}</TableCell>
+                        <TableCell>{venta.fecha ? format(new Date(venta.fecha), 'dd/MM/yyyy') : '-'}</TableCell>
+                        <TableCell>{venta.nombre}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{venta.modelo}</p>
+                            {(venta.capacidad || venta.color) && (
+                              <p className="text-xs text-slate-500">
+                                {[venta.capacidad, venta.color].filter(Boolean).join(' · ')}
+                              </p>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>{venta.proveedor}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">{venta.marketplace}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">US$ {venta.costo?.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">US$ {venta.venta?.toFixed(2)}</TableCell>
+                        <TableCell className="text-right">
+                          <span className={venta.ganancia >= 0 ? "text-green-600 font-semibold" : "text-red-600 font-semibold"}>
+                            US$ {venta.ganancia?.toFixed(2)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <Link to={createPageUrl(`VentaDetalle?id=${venta.id}`)}>
+                            <Button variant="ghost" size="icon">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
