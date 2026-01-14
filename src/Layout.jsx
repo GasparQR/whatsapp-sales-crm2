@@ -62,7 +62,7 @@ export default function Layout({ children, currentPageName }) {
               <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">T</span>
               </div>
-              <span className="font-bold text-slate-900">TechCRM</span>
+              <span className="font-bold text-slate-900">AltatechCRM</span>
             </div>
             <Button
               variant="ghost"
@@ -102,7 +102,7 @@ export default function Layout({ children, currentPageName }) {
           <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-xl p-4 text-white">
             <p className="text-xs text-slate-400 mb-1">Mini CRM</p>
             <p className="text-sm font-medium">Seguimiento de ventas</p>
-            <p className="text-xs text-slate-400 mt-2">WhatsApp · Tecnología</p>
+            <p className="text-xs text-slate-400 mt-2">Altatech · Tecnología</p>
           </div>
         </div>
       </aside>
