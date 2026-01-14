@@ -127,7 +127,9 @@ export default function Consultas() {
   const handleMarcarConcretado = async (consulta) => {
     const ventasExistentes = await base44.entities.Venta.filter({ consultaId: consulta.id });
     if (ventasExistentes.length > 0) {
-      toast.error("Ya existe una venta registrada para esta consulta");
+      // Abrir venta existente para editar
+      const ventaExistente = ventasExistentes[0];
+      window.location.href = createPageUrl(`VentaDetalle?id=${ventaExistente.id}`);
       return;
     }
     setConsultaParaVenta(consulta);
