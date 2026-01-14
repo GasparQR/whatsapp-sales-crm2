@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { name: "Home", icon: LayoutDashboard, page: "Home" },
   { name: "Pipeline", icon: Kanban, page: "Pipeline" },
   { name: "Consultas", icon: List, page: "Consultas" },
+  { name: "Ventas", icon: LayoutDashboard, page: "Ventas" },
   { name: "Hoy", icon: Calendar, page: "Hoy" },
   { name: "Contactos", icon: Users, page: "Contactos" },
   { name: "Plantillas", icon: MessageSquare, page: "Plantillas" },
