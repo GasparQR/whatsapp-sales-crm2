@@ -189,7 +189,7 @@ export default function Plantillas() {
               </Button>
             </Link>
           </div>
-          {currentUser?.canEditTemplates && (
+          {currentUser?.role === 'admin' && (
             <Button onClick={() => { resetForm(); setShowForm(true); }} className="gap-2">
               <Plus className="w-4 h-4" />
               Nueva plantilla
@@ -218,7 +218,7 @@ export default function Plantillas() {
                     >
                       <Eye className="w-4 h-4" />
                     </Button>
-                    {currentUser?.canEditTemplates && (
+                    {currentUser?.role === 'admin' && (
                       <>
                         <Button 
                           variant="ghost" 
