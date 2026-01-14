@@ -60,6 +60,15 @@ export default function SelectorListasWhatsApp({ contactoId, contactoWhatsapp, c
     }
   });
 
+  const formatWhatsAppNumber = (phone) => {
+    if (!phone) return "";
+    let clean = phone.replace(/\D/g, "");
+    if (clean.length > 0 && !clean.startsWith("54") && clean.length <= 10) {
+      clean = "54" + clean;
+    }
+    return clean;
+  };
+
   const handleCopiar = async () => {
     if (!selectedLista) return;
     
@@ -74,10 +83,17 @@ export default function SelectorListasWhatsApp({ contactoId, contactoWhatsapp, c
   const handleAbrirWhatsApp = async () => {
     if (!selectedLista || !contactoWhatsapp) return;
 
+    const formattedWhatsapp = formatWhatsAppNumber(contactoWhatsapp);
+
+    if (!formattedWhatsapp) {
+      toast.error("Número de WhatsApp no válido");
+      return;
+    }
+
     await registrarEnvioMutation.mutateAsync("AbrirWhatsApp");
 
     const textEncoded = encodeURIComponent(selectedLista.texto);
-    window.open(`https://wa.me/${contactoWhatsapp}?text=${textEncoded}`, "_blank");
+    window.open(`https://wa.me/${formattedWhatsapp}?text=${textEncoded}`, "_blank");
   };
 
   return (
