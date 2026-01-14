@@ -20,6 +20,7 @@ import ConsultaForm from "@/components/crm/ConsultaForm";
 import WhatsAppSender from "@/components/crm/WhatsAppSender";
 import DetalleConsultaDialog from "@/components/crm/DetalleConsultaDialog";
 import DialogSelectorListasWhatsApp from "@/components/crm/DialogSelectorListasWhatsApp";
+import VentaForm from "@/components/ventas/VentaForm";
 import { toast } from "sonner";
 
 const etapaColors = {
@@ -44,6 +45,8 @@ export default function Consultas() {
   const [showDetalleDialog, setShowDetalleDialog] = useState(false);
   const [showListasDialog, setShowListasDialog] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState(null);
+  const [showVentaForm, setShowVentaForm] = useState(false);
+  const [consultaParaVenta, setConsultaParaVenta] = useState(null);
   const [search, setSearch] = useState("");
   const [filtroEtapa, setFiltroEtapa] = useState("todas");
   const [filtroCanal, setFiltroCanal] = useState("todos");
@@ -122,11 +125,13 @@ export default function Consultas() {
   };
 
   const handleMarcarConcretado = async (consulta) => {
-    await updateMutation.mutateAsync({
-      id: consulta.id,
-      data: { etapa: "Concretado", concretado: true }
-    });
-    toast.success("¡Venta concretada!");
+    const ventasExistentes = await base44.entities.Venta.filter({ consultaId: consulta.id });
+    if (ventasExistentes.length > 0) {
+      toast.error("Ya existe una venta registrada para esta consulta");
+      return;
+    }
+    setConsultaParaVenta(consulta);
+    setShowVentaForm(true);
   };
 
   const handleMarcarPerdido = async (consulta, motivo) => {
@@ -455,6 +460,21 @@ export default function Consultas() {
         contactoWhatsapp={selectedConsulta?.contactoWhatsapp}
         consultaId={selectedConsulta?.id}
         onMessageSent={refetch}
+      />
+
+      <VentaForm
+        open={showVentaForm}
+        onOpenChange={setShowVentaForm}
+        consulta={consultaParaVenta}
+        onVentaCreada={async () => {
+          await updateMutation.mutateAsync({
+            id: consultaParaVenta.id,
+            data: { concretado: true, etapa: "Concretado" }
+          });
+          setShowVentaForm(false);
+          setConsultaParaVenta(null);
+          toast.success("¡Venta registrada!");
+        }}
       />
     </div>
   );
