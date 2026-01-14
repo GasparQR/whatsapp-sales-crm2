@@ -93,7 +93,7 @@ export default function SelectorListasWhatsApp({ contactoId, contactoWhatsapp, c
     await registrarEnvioMutation.mutateAsync("AbrirWhatsApp");
 
     const textEncoded = encodeURIComponent(selectedLista.texto);
-    window.open(`https://wa.me/${formattedWhatsapp}?text=${textEncoded}`, "_blank");
+    window.open(`https://api.whatsapp.com/send?phone=${formattedWhatsapp}&text=${textEncoded}`, "_blank");
   };
 
   return (
