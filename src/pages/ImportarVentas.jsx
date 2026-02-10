@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
-import { normalizeRow } from "@/utils/importNormalization";
+import { normalizeRow } from "@/components/utils/importNormalization";
 import ImportPreviewTable from "@/components/ventas/ImportPreviewTable";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";

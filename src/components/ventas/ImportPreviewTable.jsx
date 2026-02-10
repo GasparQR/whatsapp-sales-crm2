@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertCircle, RefreshCw, CheckCircle2 } from "lucide-react";
-import { calculateGanancia } from "@/utils/importNormalization";
+import { calculateGanancia } from "@/components/utils/importNormalization";
 import { toast } from "sonner";
 
 export default function ImportPreviewTable({ datos, onDatosChange }) {
