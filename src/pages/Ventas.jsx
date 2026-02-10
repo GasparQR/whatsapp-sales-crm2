@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Eye, Search, Filter, DollarSign, TrendingUp, Package, Plus } from "lucide-react";
+import { ArrowLeft, Eye, Search, Filter, DollarSign, TrendingUp, Package, Plus, Upload, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import VentaForm from "@/components/ventas/VentaForm";
@@ -80,6 +80,18 @@ export default function Ventas() {
                 <Plus className="w-4 h-4" />
                 Nueva Venta
               </Button>
+              <Link to={createPageUrl("ImportarVentas")}>
+                <Button variant="outline" className="gap-2">
+                  <Upload className="w-4 h-4" />
+                  Importar
+                </Button>
+              </Link>
+              <Link to={createPageUrl("ExportarVentas")}>
+                <Button variant="outline" className="gap-2">
+                  <Download className="w-4 h-4" />
+                  Exportar
+                </Button>
+              </Link>
               <Link to={createPageUrl("VentasDashboard")}>
                 <Button variant="outline" className="gap-2">
                   <TrendingUp className="w-4 h-4" />
