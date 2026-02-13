@@ -10,6 +10,7 @@ import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 import { User, Package, DollarSign, Calendar, Plus } from "lucide-react";
 import moment from "moment";
+import { getNextBusinessDay } from "@/components/utils/dateUtils";
 
 const CATEGORIAS = ["iPhone", "Mac", "iPad", "AirPods", "Apple Watch", "Accesorios", "Otro"];
 const CANALES = ["Instagram", "WhatsApp", "MercadoLibre", "Referido", "Local", "Otro"];
@@ -33,7 +34,7 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
     etapa: "Nuevo",
     prioridad: "Media",
     canalOrigen: "",
-    proximoSeguimiento: moment().add(1, 'day').format("YYYY-MM-DD"),
+    proximoSeguimiento: getNextBusinessDay(new Date(), 3),
     motivoPerdida: ""
   });
 
@@ -69,7 +70,7 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
         etapa: "Nuevo",
         prioridad: "Media",
         canalOrigen: "",
-        proximoSeguimiento: moment().add(1, 'day').format("YYYY-MM-DD"),
+        proximoSeguimiento: getNextBusinessDay(new Date(), 3),
         motivoPerdida: ""
       });
     }
