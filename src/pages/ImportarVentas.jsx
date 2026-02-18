@@ -312,7 +312,7 @@ export default function ImportarVentas() {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-900 font-medium mb-2">Formato esperado:</p>
                 <p className="text-xs text-blue-700">
-                  CÓDIGO, FECHA, NOMBRE, MODELO, CAPACIDAD, COLOR, PROVEEDOR, MARKETPLACE, COSTO, COMISION, VENTA, GANANCIA
+                  CODIGO, FECHA, NOMBRE, MODELO, CAPACIDAD, COLOR, PROVEEDOR, MARKETPLACE, COSTO, COMISION, VENTA, GANANCIA
                 </p>
               </div>
             </CardContent>
