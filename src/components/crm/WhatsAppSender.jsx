@@ -132,7 +132,7 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
     };
     
     if (consulta.etapa === "Nuevo") {
-      updates.etapa = "Respondido";
+      updates.etapa = "Seguimiento";
     }
 
     await base44.entities.Consulta.update(consulta.id, updates);
