@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Copy, ExternalLink, Check, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
+import { addBusinessDays } from "date-fns";
 
 export default function WhatsAppSender({ open, onOpenChange, consulta, onMessageSent }) {
   const [plantillas, setPlantillas] = useState([]);
@@ -128,7 +129,8 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
     // Actualizar consulta
     const updates = {
       ultimoContacto: new Date().toISOString(),
-      cotizacionEnviada: true
+      cotizacionEnviada: true,
+      proximoSeguimiento: addBusinessDays(new Date(), 3).toISOString().split('T')[0]
     };
     
     if (consulta.etapa === "Nuevo") {
