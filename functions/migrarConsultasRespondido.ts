@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
 
         // Buscar todas las consultas con etapa "Respondido"
         const consultasRespondido = await base44.asServiceRole.entities.Consulta.filter({ 
-            etapa: "Respondido" 
+            etapa: "Seguimiento1" 
         });
 
         // Actualizar cada una a "Seguimiento"
