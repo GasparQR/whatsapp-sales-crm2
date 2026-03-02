@@ -18,7 +18,8 @@ Deno.serve(async (req) => {
       "EMI IMPO": "IMPO CBA",
       "MATI": "MATI NEXUS",
       "MARTIN MB": "MB CELUS",
-      "EDY": "EDY",  // mantener si está bien
+      "MARTÍN MB": "MB CELUS",
+      "MARTIN MB CELUS": "MB CELUS",
     };
 
     const allVentas = await base44.asServiceRole.entities.Venta.list();
