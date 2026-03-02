@@ -55,6 +55,7 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada,
     if (ventaExistente && open) {
       setFormData({
         ...ventaExistente,
+        apellidoSnapshot: ventaExistente.apellidoSnapshot || "",
         costo: ventaExistente.costo || "",
         venta: ventaExistente.venta || "",
         comision: ventaExistente.comision || 0,
