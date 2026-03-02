@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const CATEGORIAS = ["iPhone", "Mac", "iPad", "AirPods", "Apple Watch", "Accesorios", "General"];
-const ETAPAS = ["Nuevo", "Seguimiento", "Cierre", "General"];
+const ETAPAS = ["Nuevo", "Seguimiento", "Concretado", "Perdido", "General"];
 
 const VARIABLES = [
   { key: "{NOMBRE}", desc: "Nombre del cliente" },

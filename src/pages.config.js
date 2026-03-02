@@ -60,6 +60,7 @@ import ImportarVentas from './pages/ImportarVentas';
 import ListasWhatsApp from './pages/ListasWhatsApp';
 import Pipeline from './pages/Pipeline';
 import Plantillas from './pages/Plantillas';
+import Postventa from './pages/Postventa';
 import ProveedorDetalle from './pages/ProveedorDetalle';
 import Proveedores from './pages/Proveedores';
 import Reportes from './pages/Reportes';
@@ -67,7 +68,6 @@ import Variables from './pages/Variables';
 import VentaDetalle from './pages/VentaDetalle';
 import Ventas from './pages/Ventas';
 import VentasDashboard from './pages/VentasDashboard';
-import Postventa from './pages/Postventa';
 import __Layout from './Layout.jsx';
 
 
@@ -85,6 +85,7 @@ export const PAGES = {
     "ListasWhatsApp": ListasWhatsApp,
     "Pipeline": Pipeline,
     "Plantillas": Plantillas,
+    "Postventa": Postventa,
     "ProveedorDetalle": ProveedorDetalle,
     "Proveedores": Proveedores,
     "Reportes": Reportes,
@@ -92,7 +93,6 @@ export const PAGES = {
     "VentaDetalle": VentaDetalle,
     "Ventas": Ventas,
     "VentasDashboard": VentasDashboard,
-    "Postventa": Postventa,
 }
 
 export const pagesConfig = {
