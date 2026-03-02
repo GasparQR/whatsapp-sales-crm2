@@ -31,7 +31,7 @@ export default function Layout({ children, currentPageName }) {
 
   return (
     <WorkspaceProvider>
-    <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-slate-50">
       <Toaster position="top-right" richColors />
       
       {/* Mobile Header */}
