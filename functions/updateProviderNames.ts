@@ -59,17 +59,18 @@ Deno.serve(async (req) => {
 
     // Actualizar de a 5 con pausa entre lotes
     const updated = [];
-    const BATCH = 5;
+    const BATCH = 3;
     for (let i = 0; i < toUpdate.length; i += BATCH) {
       const batch = toUpdate.slice(i, i + BATCH);
-      await Promise.all(batch.map(item => {
+      for (const item of batch) {
         const patch = { proveedorNombreSnapshot: item.newName };
         if (item.newProveedorId) patch.proveedorId = item.newProveedorId;
-        return base44.asServiceRole.entities.Venta.update(item.id, patch);
-      }));
+        await base44.asServiceRole.entities.Venta.update(item.id, patch);
+        await new Promise(r => setTimeout(r, 300));
+      }
       updated.push(...batch);
       if (i + BATCH < toUpdate.length) {
-        await new Promise(r => setTimeout(r, 500));
+        await new Promise(r => setTimeout(r, 1000));
       }
     }
 
