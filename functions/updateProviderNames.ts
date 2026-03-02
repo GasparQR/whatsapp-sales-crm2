@@ -9,6 +9,11 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
+    const normalizeName = (name) => {
+      if (!name) return '';
+      return name.toLowerCase().trim().replace(/\s+/g, ' ');
+    };
+
     const nameMap = {
       "EMI IMPO": "IMPO CBA",
       "GON CETSELL": "CELLSAT",
@@ -16,15 +21,20 @@ Deno.serve(async (req) => {
       "MARTIN MB": "MB CELUS"
     };
 
+    const normalizedNameMap = {};
+    for (const oldName in nameMap) {
+      normalizedNameMap[normalizeName(oldName)] = nameMap[oldName];
+    }
+
+    const allProviders = await base44.asServiceRole.entities.Proveedor.list();
     const updatedProviders = [];
 
-    for (const oldName in nameMap) {
-      const newName = nameMap[oldName];
-      const providers = await base44.asServiceRole.entities.Proveedor.filter({ nombre: oldName });
-
-      for (const provider of providers) {
+    for (const provider of allProviders) {
+      const normalizedProviderName = normalizeName(provider.nombre);
+      const newName = normalizedNameMap[normalizedProviderName];
+      if (newName && provider.nombre !== newName) {
         await base44.asServiceRole.entities.Proveedor.update(provider.id, { nombre: newName });
-        updatedProviders.push({ id: provider.id, oldName, newName });
+        updatedProviders.push({ id: provider.id, oldName: provider.nombre, newName });
       }
     }
 
