@@ -9,28 +9,51 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Mapa: nombre sucio -> { nombre canónico, proveedorId }
     const nameMap = {
-      "GON CETSELL": "CELLSAT",
-      "EMI IMPO": "IMPO CBA",
-      "MATI": "MATI NEXUS",
-      "MARTIN MB": "MB CELUS",
-      "MARTÍN MB": "MB CELUS",
-      "MARTIN MB CELUS": "MB CELUS",
+      "GON CETSELL":      { nombre: "CELLSAT",    id: "6968c0edeb7edf8d57cae8aa" },
+      "EMI IMPO":         { nombre: "IMPO CBA",   id: "6968c0973e7148628ebb23d4" },
+      "EMI":              { nombre: "IMPO CBA",   id: "6968c0973e7148628ebb23d4" },
+      "IMPO CBA":         { nombre: "IMPO CBA",   id: "6968c0973e7148628ebb23d4" },
+      "MATI":             { nombre: "MATI NEXUS", id: "699847fe9b38acaf878e34ec" },
+      "MATI NEXUS":       { nombre: "MATI NEXUS", id: "699847fe9b38acaf878e34ec" },
+      "MARTIN MB":        { nombre: "MB CELUS",   id: "6968c19b33dc2a668f64cbc9" },
+      "MARTÍN MB":        { nombre: "MB CELUS",   id: "6968c19b33dc2a668f64cbc9" },
+      "MARTIN MB CELUS":  { nombre: "MB CELUS",   id: "6968c19b33dc2a668f64cbc9" },
+      "MB CELUS":         { nombre: "MB CELUS",   id: "6968c19b33dc2a668f64cbc9" },
+      "CELLSAT":          { nombre: "CELLSAT",    id: "6968c0edeb7edf8d57cae8aa" },
     };
 
     const allVentas = await base44.asServiceRole.entities.Venta.list('-created_date', 500);
 
-    // Detectar cuáles necesitan actualización
+    // Detectar cuáles necesitan actualización de nombre o ID
     const toUpdate = [];
     for (const venta of allVentas) {
       const snap = (venta.proveedorNombreSnapshot || '').trim();
       const texto = (venta.proveedorTexto || '').trim();
-      const newName = nameMap[snap];
+      const mapped = nameMap[snap] || nameMap[texto];
 
-      if (newName && snap !== newName) {
-        toUpdate.push({ id: venta.id, codigo: venta.codigo, oldName: snap, newName });
-      } else if (!snap && texto) {
-        toUpdate.push({ id: venta.id, codigo: venta.codigo, oldName: '', newName: texto });
+      if (mapped) {
+        const needsNameFix = snap !== mapped.nombre;
+        const needsIdFix = !venta.proveedorId || venta.proveedorId !== mapped.id;
+        if (needsNameFix || needsIdFix) {
+          toUpdate.push({
+            id: venta.id,
+            codigo: venta.codigo,
+            oldName: snap,
+            newName: mapped.nombre,
+            newProveedorId: mapped.id
+          });
+        }
+      } else if (!snap && texto && !venta.proveedorId) {
+        // No está en el mapa pero tiene texto: actualizar snapshot al menos
+        toUpdate.push({
+          id: venta.id,
+          codigo: venta.codigo,
+          oldName: '',
+          newName: texto,
+          newProveedorId: null
+        });
       }
     }
 
@@ -39,11 +62,11 @@ Deno.serve(async (req) => {
     const BATCH = 5;
     for (let i = 0; i < toUpdate.length; i += BATCH) {
       const batch = toUpdate.slice(i, i + BATCH);
-      await Promise.all(batch.map(item =>
-        base44.asServiceRole.entities.Venta.update(item.id, {
-          proveedorNombreSnapshot: item.newName
-        })
-      ));
+      await Promise.all(batch.map(item => {
+        const patch = { proveedorNombreSnapshot: item.newName };
+        if (item.newProveedorId) patch.proveedorId = item.newProveedorId;
+        return base44.asServiceRole.entities.Venta.update(item.id, patch);
+      }));
       updated.push(...batch);
       if (i + BATCH < toUpdate.length) {
         await new Promise(r => setTimeout(r, 500));
