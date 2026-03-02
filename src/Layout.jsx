@@ -30,6 +30,7 @@ export default function Layout({ children, currentPageName }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
+    <WorkspaceProvider>
     <div className="min-h-screen bg-slate-50">
       <Toaster position="top-right" richColors />
       
