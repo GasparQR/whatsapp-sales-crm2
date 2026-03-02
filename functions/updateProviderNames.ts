@@ -21,26 +21,33 @@ Deno.serve(async (req) => {
       "MARTIN MB": "MB CELUS"
     };
 
-    const normalizedNameMap = {};
+    // Build normalized map: normalizedOldName -> newName
+    const normalizedMap = {};
     for (const oldName in nameMap) {
-      normalizedNameMap[normalizeName(oldName)] = nameMap[oldName];
+      normalizedMap[normalizeName(oldName)] = { newName: nameMap[oldName], oldName };
     }
 
-    const allProviders = await base44.asServiceRole.entities.Proveedor.list();
-    const updatedProviders = [];
+    const allVentas = await base44.asServiceRole.entities.Venta.list();
+    const updatedVentas = [];
 
-    for (const provider of allProviders) {
-      const normalizedProviderName = normalizeName(providerNombreSnapshot);
-      const newName = normalizedNameMap[normalizedProviderName];
-      if (newName && providerNombreSnapshot !== newName) {
-        await base44.asServiceRole.entities.Proveedor.update(provider.id, { nombre: newName });
-        updatedProviders.push({ id: provider.id, oldName: providerNombreSnapshot, newName });
+    for (const venta of allVentas) {
+      const snapshot = venta.proveedorNombreSnapshot;
+      if (!snapshot) continue;
+
+      const normalized = normalizeName(snapshot);
+      const match = normalizedMap[normalized];
+
+      if (match && snapshot !== match.newName) {
+        await base44.asServiceRole.entities.Venta.update(venta.id, {
+          proveedorNombreSnapshot: match.newName
+        });
+        updatedVentas.push({ id: venta.id, oldName: snapshot, newName: match.newName });
       }
     }
 
     return Response.json({
-      message: `Se actualizaron ${updatedProviders.length} proveedores.`,
-      details: updatedProviders
+      message: `Se actualizaron ${updatedVentas.length} ventas.`,
+      details: updatedVentas
     });
 
   } catch (error) {
