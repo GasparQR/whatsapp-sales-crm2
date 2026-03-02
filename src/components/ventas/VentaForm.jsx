@@ -213,7 +213,18 @@ export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada,
           notas: formData.notas
         };
 
-        await base44.entities.Venta.create(ventaData);
+        const ventaCreada = await base44.entities.Venta.create(ventaData);
+
+        // Si se ingresó WhatsApp, crear contacto automáticamente y actualizar la venta
+        if (formData.whatsappCliente && !formData.contactoId) {
+          const contactoCreado = await base44.entities.Contacto.create({
+            nombre: formData.nombreSnapshot,
+            whatsapp: formData.whatsappCliente,
+            canalOrigen: formData.marketplace || "Otro"
+          });
+          await base44.entities.Venta.update(ventaCreada.id, { contactoId: contactoCreado.id });
+        }
+
         toast.success(finalizar ? "Venta finalizada" : "Borrador guardado");
       }
       
