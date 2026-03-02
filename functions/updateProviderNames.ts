@@ -23,27 +23,27 @@ Deno.serve(async (req) => {
     const updated = [];
     for (const venta of allVentas) {
       const snap = (venta.proveedorNombreSnapshot || '').trim();
+      const texto = (venta.proveedorTexto || '').trim();
       const newName = nameMap[snap];
 
       if (newName && snap !== newName) {
+        // Corregir nombre incorrecto
         await base44.asServiceRole.entities.Venta.update(venta.id, {
           proveedorNombreSnapshot: newName
         });
         updated.push({ id: venta.id, codigo: venta.codigo, oldName: snap, newName });
+      } else if (!snap && texto) {
+        // Copiar proveedorTexto cuando snapshot está vacío
+        await base44.asServiceRole.entities.Venta.update(venta.id, {
+          proveedorNombreSnapshot: texto
+        });
+        updated.push({ id: venta.id, codigo: venta.codigo, oldName: '', newName: texto });
       }
-    }
-
-    // Also show current unique names for verification
-    const uniqueNames = {};
-    for (const venta of allVentas) {
-      const snap = venta.proveedorNombreSnapshot || '';
-      uniqueNames[snap] = (uniqueNames[snap] || 0) + 1;
     }
 
     return Response.json({
       message: `Se actualizaron ${updated.length} ventas.`,
-      details: updated,
-      uniqueNamesBeforeUpdate: uniqueNames
+      details: updated
     });
 
   } catch (error) {
