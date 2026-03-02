@@ -10,6 +10,7 @@ import WhatsAppSender from "@/components/crm/WhatsAppSender";
 import VentaForm from "@/components/ventas/VentaForm";
 import { Button } from "@/components/ui/button";
 import { Plus, Filter, ArrowLeft, Settings } from "lucide-react";
+import { useWorkspace } from "@/components/context/WorkspaceContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 

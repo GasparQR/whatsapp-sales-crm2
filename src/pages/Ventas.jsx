@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArrowLeft, Eye, Search, Filter, DollarSign, TrendingUp, Package, Plus, Upload, Download } from "lucide-react";
+import { useWorkspace } from "@/components/context/WorkspaceContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import VentaForm from "@/components/ventas/VentaForm";

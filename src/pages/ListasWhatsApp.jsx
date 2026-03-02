@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { useCurrentUser } from "@/components/hooks/useCurrentUser";
+import { useWorkspace } from "@/components/context/WorkspaceContext";
 import { ArrowLeft, Plus, Pencil, Trash2, Archive } from "lucide-react";
 import { toast } from "sonner";
 import moment from "moment";

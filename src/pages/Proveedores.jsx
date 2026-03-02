@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Plus, Search, Eye, Phone, CheckCircle, XCircle, TrendingUp } from "lucide-react";
+import { useWorkspace } from "@/components/context/WorkspaceContext";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
