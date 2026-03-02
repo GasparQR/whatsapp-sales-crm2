@@ -57,31 +57,25 @@ export default function Consultas() {
 
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
+  const { workspace } = useWorkspace();
 
   const { data: consultas = [], refetch, isLoading } = useQuery({
-    queryKey: ['consultas-list', currentUser?.email],
-    queryFn: async () => {
-      const allConsultas = await base44.entities.Consulta.list("-created_date", 500);
-      if (!currentUser) return [];
-      if (currentUser.viewAllData) {
-        return allConsultas;
-      }
-      return allConsultas.filter(c => c.created_by === currentUser.email);
-    },
-    enabled: !!currentUser
+    queryKey: ['consultas-list', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Consulta.filter({ workspace_id: workspace.id }, "-created_date", 500) : [],
+    enabled: !!workspace
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Consulta.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consultas-list', currentUser?.email] });
+      queryClient.invalidateQueries({ queryKey: ['consultas-list', workspace?.id] });
     }
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Consulta.delete(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consultas-list', currentUser?.email] });
+      queryClient.invalidateQueries({ queryKey: ['consultas-list', workspace?.id] });
       toast.success("Consulta eliminada");
     }
   });

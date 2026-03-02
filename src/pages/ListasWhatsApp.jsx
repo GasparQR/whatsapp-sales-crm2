@@ -16,14 +16,16 @@ import moment from "moment";
 
 export default function ListasWhatsApp() {
   const { data: currentUser } = useCurrentUser();
+  const { workspace } = useWorkspace();
   const [search, setSearch] = useState("");
   const [categoriaFilter, setCategoriaFilter] = useState("all");
   const [estadoFilter, setEstadoFilter] = useState("all");
   const [proveedorFilter, setProveedorFilter] = useState("all");
 
   const { data: listas = [], refetch } = useQuery({
-    queryKey: ['listas-whatsapp'],
-    queryFn: () => base44.entities.ListaWhatsApp.list("-updated_date", 1000)
+    queryKey: ['listas-whatsapp', workspace?.id],
+    queryFn: () => workspace ? base44.entities.ListaWhatsApp.filter({ workspace_id: workspace.id }, "-updated_date", 1000) : [],
+    enabled: !!workspace
   });
 
   const deleteMutation = {

@@ -21,15 +21,18 @@ export default function Proveedores() {
   const [filterActivo, setFilterActivo] = useState("activos");
 
   const queryClient = useQueryClient();
+  const { workspace } = useWorkspace();
 
   const { data: proveedores = [], isLoading } = useQuery({
-    queryKey: ['proveedores'],
-    queryFn: () => base44.entities.Proveedor.list("-created_date")
+    queryKey: ['proveedores', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Proveedor.filter({ workspace_id: workspace.id }, "-created_date") : [],
+    enabled: !!workspace
   });
 
   const { data: ventas = [] } = useQuery({
-    queryKey: ['ventas-proveedores'],
-    queryFn: () => base44.entities.Venta.list()
+    queryKey: ['ventas-proveedores', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Venta.filter({ workspace_id: workspace.id }) : [],
+    enabled: !!workspace
   });
 
   const calcularMetricas = (proveedorId) => {

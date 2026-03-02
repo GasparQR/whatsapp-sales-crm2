@@ -42,29 +42,24 @@ export default function Contactos() {
 
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
+  const { workspace } = useWorkspace();
 
   const { data: contactos = [], refetch } = useQuery({
-    queryKey: ['contactos', currentUser?.email],
-    queryFn: async () => {
-      const allContactos = await base44.entities.Contacto.list("-created_date", 500);
-      if (!currentUser) return [];
-      if (currentUser.viewAllData) {
-        return allContactos;
-      }
-      return allContactos.filter(c => c.created_by === currentUser.email);
-    },
-    enabled: !!currentUser
+    queryKey: ['contactos', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Contacto.filter({ workspace_id: workspace.id }, "-created_date", 500) : [],
+    enabled: !!workspace
   });
 
   const { data: consultas = [] } = useQuery({
-    queryKey: ['consultas-contactos'],
-    queryFn: () => base44.entities.Consulta.list("-created_date", 1000)
+    queryKey: ['consultas-contactos', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Consulta.filter({ workspace_id: workspace.id }, "-created_date", 1000) : [],
+    enabled: !!workspace
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.Contacto.create(data),
+    mutationFn: (data) => base44.entities.Contacto.create({ ...data, workspace_id: workspace?.id }),
     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ['contactos', currentUser?.email] });
+       queryClient.invalidateQueries({ queryKey: ['contactos', workspace?.id] });
        toast.success("Contacto creado");
       resetForm();
     }
@@ -73,7 +68,7 @@ export default function Contactos() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Contacto.update(id, data),
     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ['contactos', currentUser?.email] });
+       queryClient.invalidateQueries({ queryKey: ['contactos', workspace?.id] });
        toast.success("Contacto actualizado");
       resetForm();
     }
@@ -82,7 +77,7 @@ export default function Contactos() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.Contacto.delete(id),
     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ['contactos', currentUser?.email] });
+       queryClient.invalidateQueries({ queryKey: ['contactos', workspace?.id] });
        toast.success("Contacto eliminado");
     }
   });

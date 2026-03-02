@@ -11,9 +11,12 @@ import { useWorkspace } from "@/components/context/WorkspaceContext";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 
 export default function VentasDashboard() {
+  const { workspace } = useWorkspace();
+
   const { data: ventas = [], isLoading } = useQuery({
-    queryKey: ['ventas'],
-    queryFn: () => base44.entities.Venta.list("-created_date")
+    queryKey: ['ventas', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Venta.filter({ workspace_id: workspace.id }, "-created_date") : [],
+    enabled: !!workspace
   });
 
   // KPIs Generales

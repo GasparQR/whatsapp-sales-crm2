@@ -18,20 +18,24 @@ export default function Reportes() {
   const [periodo, setPeriodo] = useState("30");
   const [filtroCanal, setFiltroCanal] = useState("todos");
   const [filtroVendedor, setFiltroVendedor] = useState("todos");
+  const { workspace } = useWorkspace();
 
   const { data: ventas = [], isLoading: isLoadingVentas } = useQuery({
-    queryKey: ['ventas-reportes'],
-    queryFn: () => base44.entities.Venta.list("-fecha", 500),
+    queryKey: ['ventas-reportes', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Venta.filter({ workspace_id: workspace.id }, "-fecha", 500) : [],
+    enabled: !!workspace
   });
 
   const { data: consultas = [] } = useQuery({
-    queryKey: ['consultas-reportes'],
-    queryFn: () => base44.entities.Consulta.list("-created_date", 1000)
+    queryKey: ['consultas-reportes', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Consulta.filter({ workspace_id: workspace.id }, "-created_date", 1000) : [],
+    enabled: !!workspace
   });
 
   const { data: proveedores = [] } = useQuery({
-    queryKey: ['proveedores-reportes'],
-    queryFn: () => base44.entities.Proveedor.list()
+    queryKey: ['proveedores-reportes', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Proveedor.filter({ workspace_id: workspace.id }) : [],
+    enabled: !!workspace
   });
 
   const { data: users = [] } = useQuery({

@@ -57,30 +57,24 @@ export default function Plantillas() {
 
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
+  const { workspace } = useWorkspace();
 
   const { data: plantillas = [], refetch } = useQuery({
-    queryKey: ['plantillas', currentUser?.email],
-    queryFn: async () => {
-      const allPlantillas = await base44.entities.PlantillaWhatsApp.list("-created_date");
-      if (!currentUser) return [];
-      // Si el usuario puede ver todo, mostrar todas; si no, solo las suyas
-      if (currentUser.viewAllData) {
-        return allPlantillas;
-      }
-      return allPlantillas.filter(p => p.created_by === currentUser.email);
-    },
-    enabled: !!currentUser
+    queryKey: ['plantillas', workspace?.id],
+    queryFn: () => workspace ? base44.entities.PlantillaWhatsApp.filter({ workspace_id: workspace.id }, "-created_date") : [],
+    enabled: !!workspace
   });
 
   const { data: variablesDB = [] } = useQuery({
-    queryKey: ['variables'],
-    queryFn: () => base44.entities.VariablePlantilla.list()
+    queryKey: ['variables', workspace?.id],
+    queryFn: () => workspace ? base44.entities.VariablePlantilla.filter({ workspace_id: workspace.id }) : [],
+    enabled: !!workspace
   });
 
   const createMutation = useMutation({
-    mutationFn: (data) => base44.entities.PlantillaWhatsApp.create(data),
+    mutationFn: (data) => base44.entities.PlantillaWhatsApp.create({ ...data, workspace_id: workspace?.id }),
     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ['plantillas', currentUser?.email] });
+       queryClient.invalidateQueries({ queryKey: ['plantillas', workspace?.id] });
        toast.success("Plantilla creada");
       resetForm();
     }
@@ -89,7 +83,7 @@ export default function Plantillas() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PlantillaWhatsApp.update(id, data),
     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ['plantillas', currentUser?.email] });
+       queryClient.invalidateQueries({ queryKey: ['plantillas', workspace?.id] });
        toast.success("Plantilla actualizada");
       resetForm();
     }
@@ -98,7 +92,7 @@ export default function Plantillas() {
   const deleteMutation = useMutation({
     mutationFn: (id) => base44.entities.PlantillaWhatsApp.delete(id),
     onSuccess: () => {
-       queryClient.invalidateQueries({ queryKey: ['plantillas', currentUser?.email] });
+       queryClient.invalidateQueries({ queryKey: ['plantillas', workspace?.id] });
        toast.success("Plantilla eliminada");
     }
   });

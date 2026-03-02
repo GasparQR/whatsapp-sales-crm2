@@ -23,24 +23,28 @@ export default function Pipeline() {
   const [filtroPrioridad, setFiltroPrioridad] = useState("todas");
 
   const queryClient = useQueryClient();
+  const { workspace } = useWorkspace();
 
   const { data: consultas = [], refetch } = useQuery({
-    queryKey: ['consultas-pipeline'],
-    queryFn: () => base44.entities.Consulta.list("-created_date", 500)
+    queryKey: ['consultas-pipeline', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Consulta.filter({ workspace_id: workspace.id }, "-created_date", 500) : [],
+    enabled: !!workspace
   });
 
   const { data: etapas = [] } = useQuery({
-    queryKey: ['pipeline-stages'],
+    queryKey: ['pipeline-stages', workspace?.id],
     queryFn: async () => {
-      const stages = await base44.entities.PipelineStage.list("orden", 100);
+      if (!workspace) return [];
+      const stages = await base44.entities.PipelineStage.filter({ workspace_id: workspace.id }, "orden", 100);
       return stages.filter(s => s.activa !== false);
-    }
+    },
+    enabled: !!workspace
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Consulta.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['consultas-pipeline'] });
+      queryClient.invalidateQueries({ queryKey: ['consultas-pipeline', workspace?.id] });
     }
   });
 

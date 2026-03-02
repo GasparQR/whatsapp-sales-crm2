@@ -47,21 +47,18 @@ export default function Postventa() {
 
   const queryClient = useQueryClient();
   const { data: currentUser } = useCurrentUser();
+  const { workspace } = useWorkspace();
 
   const { data: ventas = [], isLoading } = useQuery({
-    queryKey: ['ventas-postventa', currentUser?.email],
-    queryFn: async () => {
-      const all = await base44.entities.Venta.filter({ postventaActiva: true }, "-proximoSeguimientoPostventa", 1000);
-      if (!currentUser) return [];
-      if (currentUser.viewAllData) return all;
-      return all.filter(v => v.created_by === currentUser.email);
-    },
-    enabled: !!currentUser
+    queryKey: ['ventas-postventa', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Venta.filter({ workspace_id: workspace.id, postventaActiva: true }, "-proximoSeguimientoPostventa", 1000) : [],
+    enabled: !!workspace
   });
 
   const { data: contactos = [] } = useQuery({
-    queryKey: ['contactos-postventa-map'],
-    queryFn: () => base44.entities.Contacto.list()
+    queryKey: ['contactos-postventa-map', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Contacto.filter({ workspace_id: workspace.id }) : [],
+    enabled: !!workspace
   });
 
   const contactosMap = useMemo(() =>
@@ -71,7 +68,7 @@ export default function Postventa() {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.Venta.update(id, data),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ventas-postventa'] })
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['ventas-postventa', workspace?.id] })
   });
 
   const today = moment();

@@ -21,10 +21,12 @@ export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState(null);
+  const { workspace } = useWorkspace();
 
   const { data: consultas = [], refetch } = useQuery({
-    queryKey: ['consultas-home'],
-    queryFn: () => base44.entities.Consulta.list("-created_date", 1000)
+    queryKey: ['consultas-home', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Consulta.filter({ workspace_id: workspace.id }, "-created_date", 1000) : [],
+    enabled: !!workspace
   });
 
   const today = moment();

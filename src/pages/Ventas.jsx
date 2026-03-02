@@ -27,15 +27,18 @@ export default function Ventas() {
   const [showVentaForm, setShowVentaForm] = useState(false);
 
   const queryClient = useQueryClient();
+  const { workspace } = useWorkspace();
 
   const { data: ventas = [], isLoading } = useQuery({
-    queryKey: ['ventas'],
-    queryFn: () => base44.entities.Venta.list("-fecha")
+    queryKey: ['ventas', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Venta.filter({ workspace_id: workspace.id }, "-fecha") : [],
+    enabled: !!workspace
   });
 
   const { data: proveedores = [] } = useQuery({
-    queryKey: ['proveedores'],
-    queryFn: () => base44.entities.Proveedor.list()
+    queryKey: ['proveedores', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Proveedor.filter({ workspace_id: workspace.id }) : [],
+    enabled: !!workspace
   });
 
   const proveedoresUnicos = ["Todos", ...new Set(ventas.map(v => v.proveedorNombreSnapshot).filter(Boolean))];
@@ -329,7 +332,7 @@ export default function Ventas() {
           onOpenChange={setShowVentaForm}
           consulta={null}
           onVentaCreada={() => {
-            queryClient.invalidateQueries({ queryKey: ['ventas'] });
+            queryClient.invalidateQueries({ queryKey: ['ventas', workspace?.id] });
           }}
         />
       </div>

@@ -25,10 +25,12 @@ export default function Hoy() {
   const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState(null);
   const queryClient = useQueryClient();
+  const { workspace } = useWorkspace();
 
   const { data: consultas = [], refetch } = useQuery({
-    queryKey: ['consultas-hoy'],
-    queryFn: () => base44.entities.Consulta.list("-created_date", 1000)
+    queryKey: ['consultas-hoy', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Consulta.filter({ workspace_id: workspace.id }, "-created_date", 1000) : [],
+    enabled: !!workspace
   });
 
   const updateMutation = useMutation({
