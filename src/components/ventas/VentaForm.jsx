@@ -15,6 +15,7 @@ import { useWorkspace } from "@/components/context/WorkspaceContext";
 const MARKETPLACES = ["WhatsApp", "Instagram", "MercadoLibre", "Local", "Otro"];
 
 export default function VentaForm({ open, onOpenChange, consulta, onVentaCreada, ventaExistente = null }) {
+  const { workspace } = useWorkspace();
   const [formData, setFormData] = useState({
     estado: "Borrador",
     fecha: new Date().toISOString().split('T')[0],
