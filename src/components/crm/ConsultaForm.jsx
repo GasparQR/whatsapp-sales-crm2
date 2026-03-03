@@ -23,14 +23,16 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
   const [contactos, setContactos] = useState([]);
   const [showNewContact, setShowNewContact] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { workspace } = useWorkspace();
 
   const { data: etapas = [] } = useQuery({
-    queryKey: ['pipeline-stages'],
+    queryKey: ['pipeline-stages', workspace?.id],
     queryFn: async () => {
-      const stages = await base44.entities.PipelineStage.list("orden", 100);
+      if (!workspace) return [];
+      const stages = await base44.entities.PipelineStage.filter({ workspace_id: workspace.id }, "orden", 100);
       return stages.filter(s => s.activa !== false);
     },
-    enabled: open
+    enabled: open && !!workspace
   });
   
   const [formData, setFormData] = useState({
