@@ -45,7 +45,7 @@ export default function ConfigurarPipeline() {
   const createMutation = useMutation({
     mutationFn: (data) => base44.entities.PipelineStage.create({ ...data, workspace_id: workspace?.id }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pipeline-stages'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-stages', workspace?.id] });
       toast.success("Etapa creada");
       setShowDialog(false);
       setFormData({ nombre: "", color: "bg-blue-500" });
