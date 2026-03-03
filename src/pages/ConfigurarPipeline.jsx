@@ -55,7 +55,7 @@ export default function ConfigurarPipeline() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }) => base44.entities.PipelineStage.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pipeline-stages'] });
+      queryClient.invalidateQueries({ queryKey: ['pipeline-stages', workspace?.id] });
       toast.success("Etapa actualizada");
       setShowDialog(false);
       setEditando(null);
