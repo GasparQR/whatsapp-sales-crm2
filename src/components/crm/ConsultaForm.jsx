@@ -131,7 +131,8 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
       contactoWhatsapp: contacto?.whatsapp,
       presupuestoMax: formData.presupuestoMax ? Number(formData.presupuestoMax) : null,
       precioCotizado: formData.precioCotizado ? Number(formData.precioCotizado) : null,
-      fechaConsulta: consulta?.fechaConsulta || moment().format("YYYY-MM-DD")
+      fechaConsulta: consulta?.fechaConsulta || moment().format("YYYY-MM-DD"),
+      workspace_id: workspace?.id
     };
 
     // Si se marca concretado, cambiar etapa
