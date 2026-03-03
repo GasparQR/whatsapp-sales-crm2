@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DollarSign, TrendingUp, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { createPageUrl } from "@/utils";
+import { useWorkspace } from "@/components/context/WorkspaceContext";
 
 const MARKETPLACES = ["WhatsApp", "Instagram", "MercadoLibre", "Local", "Otro"];
 
