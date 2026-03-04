@@ -139,33 +139,12 @@ export default function Home() {
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard
-            title="Nuevas Hoy"
-            value={nuevasHoy}
-            subtitle={`${nuevas7d} en 7 días`}
-            icon={TrendingUp}
-            className="hover:scale-105 transition-transform"
-          />
-          <KPICard
-            title="Seguimientos Hoy"
-            value={pendientesHoy.length}
-            subtitle={vencidos.length > 0 ? `${vencidos.length} vencidos` : "Todo al día"}
-            icon={vencidos.length > 0 ? AlertCircle : Clock}
-            className={vencidos.length > 0 ? "ring-2 ring-red-200" : ""}
-          />
-          <KPICard
-            title="En Negociación"
-            value={enNegociacion}
-            subtitle="Cerca del cierre"
-            icon={Handshake}
-          />
-          <KPICard
-            title="Concretados"
-            value={concretados7d}
-            subtitle={`${concretados30d} en 30 días`}
-            icon={CheckCircle2}
-          />
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <KPICard title="Leads últimos 7d" value={last7Days.length} subtitle={`${last30Days.length} en 30 días`} icon={Users} />
+          <KPICard title="Tasa de conversión" value={`${tasaConversion}%`} subtitle={`${concretados.length} concretados`} icon={TrendingUp} />
+          <KPICard title="Ganancia Mensual" value={`$${gananciaMensual.toFixed(0)}`} subtitle={`${ventasMesActual.length} ventas`} icon={DollarSign} />
+          <KPICard title="Activos" value={activos.length} subtitle="En seguimiento" icon={Clock} />
+          <KPICard title="Perdidos" value={perdidos.length} subtitle={`${((perdidos.length / (consultas.length || 1)) * 100).toFixed(0)}% del total`} icon={XCircle} />
         </div>
 
         {/* Acciones Rápidas */}
