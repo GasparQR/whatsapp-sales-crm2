@@ -23,15 +23,18 @@ export default function Dashboard() {
   const [showForm, setShowForm] = useState(false);
   const [showWhatsApp, setShowWhatsApp] = useState(false);
   const [selectedConsulta, setSelectedConsulta] = useState(null);
+  const { workspace } = useWorkspace();
 
   const { data: consultas = [], refetch } = useQuery({
-    queryKey: ['consultas-dashboard'],
-    queryFn: () => base44.entities.Consulta.list("-created_date", 500)
+    queryKey: ['consultas-dashboard', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Consulta.filter({ workspace_id: workspace.id }, "-created_date", 500) : [],
+    enabled: !!workspace
   });
 
   const { data: ventas = [] } = useQuery({
-    queryKey: ['ventas-dashboard'],
-    queryFn: () => base44.entities.Venta.list("-fecha", 500)
+    queryKey: ['ventas-dashboard', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Venta.filter({ workspace_id: workspace.id }, "-fecha", 500) : [],
+    enabled: !!workspace
   });
 
   // KPIs
