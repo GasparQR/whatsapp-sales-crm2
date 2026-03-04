@@ -33,6 +33,12 @@ export default function Home() {
     enabled: !!workspace
   });
 
+  const { data: ventas = [] } = useQuery({
+    queryKey: ['ventas-home', workspace?.id],
+    queryFn: () => workspace ? base44.entities.Venta.filter({ workspace_id: workspace.id }, "-fecha", 500) : [],
+    enabled: !!workspace
+  });
+
   const today = moment();
   
   // KPIs
