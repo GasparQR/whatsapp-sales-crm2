@@ -46,7 +46,9 @@ export default function Hoy() {
 
   // Helper: devuelve la fecha de seguimiento correcta según etapa
   const getFechaSeguimiento = (c) =>
-    c.etapa === "Concretado" ? c.fecha_seguimiento_posventa : c.proximoSeguimiento;
+    c.etapa === "Concretado"
+      ? (c.fecha_seguimiento_posventa || c.proximoSeguimiento)
+      : c.proximoSeguimiento;
 
   const hoy = consultas.filter(c => {
     const fecha = getFechaSeguimiento(c);
