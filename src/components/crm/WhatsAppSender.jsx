@@ -34,11 +34,17 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
     const data = await base44.entities.PlantillaWhatsApp.filter({ activa: true });
     setPlantillas(data);
     
-    // Auto-seleccionar plantilla sugerida
-    const sugerida = data.find(p => 
-      p.categoriaProducto === consulta?.categoriaProducto &&
-      (mapEtapaToPlantilla(consulta?.etapa) === p.etapa || p.etapa === "General")
-    ) || data.find(p => p.categoriaProducto === "General") || data[0];
+    const etapaMapeada = mapEtapaToPlantilla(consulta?.etapa);
+    const categoria = consulta?.categoriaProducto;
+
+    // Prioridad 1: estado + categoría exacta
+    // Prioridad 2: solo estado (sin importar categoría)
+    // Prioridad 3: General
+    const sugerida = 
+      data.find(p => p.etapa === etapaMapeada && p.categoriaProducto === categoria) ||
+      data.find(p => p.etapa === etapaMapeada) ||
+      data.find(p => p.etapa === "General") ||
+      data[0];
     
     if (sugerida) {
       setSelectedPlantilla(sugerida);
