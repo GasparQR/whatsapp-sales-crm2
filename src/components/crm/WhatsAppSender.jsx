@@ -8,7 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Copy, ExternalLink, Check, Sparkles } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
-import { addBusinessDays } from "date-fns";
+
+// FIX: reemplazamos el import de date-fns por una implementación local
+// que devuelve string ISO (YYYY-MM-DD) en lugar de un objeto Date.
+function addBusinessDays(date, days) {
+  const result = new Date(date);
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    const d = result.getDay();
+    if (d !== 0 && d !== 6) added++;
+  }
+  return result.toISOString().split("T")[0]; // Devuelve string, no Date
+}
 
 export default function WhatsAppSender({ open, onOpenChange, consulta, onMessageSent }) {
   const [plantillas, setPlantillas] = useState([]);
@@ -33,19 +45,16 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
   const loadPlantillas = async () => {
     const data = await base44.entities.PlantillaWhatsApp.filter({ activa: true });
     setPlantillas(data);
-    
+
     const etapaMapeada = mapEtapaToPlantilla(consulta?.etapa);
     const categoria = consulta?.categoriaProducto;
 
-    // Prioridad 1: estado + categoría exacta
-    // Prioridad 2: solo estado (sin importar categoría)
-    // Prioridad 3: General
-    const sugerida = 
+    const sugerida =
       data.find(p => p.etapa === etapaMapeada && p.categoriaProducto === categoria) ||
       data.find(p => p.etapa === etapaMapeada) ||
       data.find(p => p.etapa === "General") ||
       data[0];
-    
+
     if (sugerida) {
       setSelectedPlantilla(sugerida);
     }
@@ -75,9 +84,7 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
 
   const formatPhoneNumber = (phone) => {
     if (!phone) return "";
-    // Remove all non-numeric characters
     let clean = phone.replace(/[^0-9]/g, "");
-    // Ensure it starts with 54 (Argentina country code) if not already present
     if (clean.length > 0 && !clean.startsWith("54")) {
       clean = "54" + clean;
     }
@@ -94,21 +101,16 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
   const handleOpenWhatsApp = async () => {
     const phone = formatPhoneNumber(consulta.contactoWhatsapp);
 
-    // 1. Limpieza y normalización segura
     const msg = String(mensaje || "")
       .normalize("NFC")
-      // elimina caracteres de control invisibles (no rompe emojis)
       .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
 
-    // 2. Usar endpoint más tolerante + URLSearchParams
     const url = new URL("https://api.whatsapp.com/send");
     url.searchParams.set("phone", phone);
     url.searchParams.set("text", msg);
 
-    // 3. Abrir WhatsApp
     window.open(url.toString(), "_blank", "noopener,noreferrer");
 
-    // 4. Registrar el envío
     try {
       await base44.entities.EnvioWhatsApp.create({
         workspace_id: consulta.workspace_id,
@@ -124,8 +126,7 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
 
   const handleMarkSent = async () => {
     setLoading(true);
-    
-    // Crear registro de mensaje
+
     await base44.entities.Mensaje.create({
       workspace_id: consulta.workspace_id,
       consultaId: consulta.id,
@@ -133,16 +134,18 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
       contenidoFinal: mensaje,
       canal: "WhatsApp",
       enviado: true,
-      fechaEnvio: new Date().toISOString()
+      fechaEnvio: new Date().toISOString(),
     });
 
-    // Actualizar consulta
+    // FIX: addBusinessDays ahora devuelve un string "YYYY-MM-DD" directamente
+    const proximoSeguimiento = addBusinessDays(new Date(), 3);
+
     const updates = {
       ultimoContacto: new Date().toISOString(),
       cotizacionEnviada: true,
-      proximoSeguimiento: addBusinessDays(new Date(), 3).toISOString().split('T')[0]
+      proximoSeguimiento, // ya es string, sin .split("T")[0] extra
     };
-    
+
     if (consulta.etapa === "Nuevo") {
       updates.etapa = "Seguimiento";
     }
@@ -168,7 +171,6 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
         </DialogHeader>
 
         <div className="space-y-4 py-4">
-          {/* Info del contacto */}
           <div className="bg-slate-50 rounded-xl p-4">
             <p className="font-semibold text-slate-900">{consulta.contactoNombre}</p>
             <p className="text-sm text-slate-500">{consulta.contactoWhatsapp}</p>
@@ -178,14 +180,13 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
             </div>
           </div>
 
-          {/* Selector de plantilla */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-500" />
               Plantilla sugerida
             </Label>
-            <Select 
-              value={selectedPlantilla?.id} 
+            <Select
+              value={selectedPlantilla?.id}
               onValueChange={(val) => setSelectedPlantilla(plantillas.find(p => p.id === val))}
             >
               <SelectTrigger>
@@ -202,10 +203,9 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
             </Select>
           </div>
 
-          {/* Editor de mensaje */}
           <div className="space-y-2">
             <Label>Mensaje</Label>
-            <Textarea 
+            <Textarea
               value={mensaje}
               onChange={(e) => setMensaje(e.target.value)}
               rows={6}
@@ -216,11 +216,7 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button
-            variant="outline"
-            onClick={handleCopy}
-            className="gap-2"
-          >
+          <Button variant="outline" onClick={handleCopy} className="gap-2">
             {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             {copied ? "Copiado" : "Copiar"}
           </Button>
@@ -231,11 +227,7 @@ export default function WhatsAppSender({ open, onOpenChange, consulta, onMessage
             <ExternalLink className="w-4 h-4" />
             Abrir WhatsApp
           </Button>
-          <Button
-            onClick={handleMarkSent}
-            disabled={loading}
-            className="gap-2"
-          >
+          <Button onClick={handleMarkSent} disabled={loading} className="gap-2">
             <Check className="w-4 h-4" />
             Marcar como enviado
           </Button>
