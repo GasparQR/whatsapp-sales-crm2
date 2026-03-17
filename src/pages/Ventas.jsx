@@ -142,7 +142,8 @@ export default function Ventas() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-600">Ganancia Mes Actual</p>
-                  <p className="text-2xl font-bold text-green-600">US$ {gananciaMesActual.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-green-600">US$ {gananciaMesUSD.toFixed(2)}</p>
+                  {gananciaMesARS > 0 && <p className="text-sm font-semibold text-blue-600">$ {gananciaMesARS.toLocaleString('es-AR', {minimumFractionDigits: 0})}</p>}
                   <p className="text-xs text-slate-500">{ventasMesActual.length} ventas</p>
                 </div>
               </div>
@@ -156,7 +157,8 @@ export default function Ventas() {
                 </div>
                 <div>
                   <p className="text-sm text-slate-600">Ganancia Total</p>
-                  <p className="text-2xl font-bold text-green-600">US$ {totalGanancia.toFixed(2)}</p>
+                  <p className="text-lg font-bold text-green-600">US$ {totalGananciaUSD.toFixed(2)}</p>
+                  {totalGananciaARS > 0 && <p className="text-sm font-semibold text-blue-600">$ {totalGananciaARS.toLocaleString('es-AR', {minimumFractionDigits: 0})}</p>}
                 </div>
               </div>
             </CardContent>
