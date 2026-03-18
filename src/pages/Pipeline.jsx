@@ -77,7 +77,7 @@ export default function Pipeline() {
     setShowVentaForm(true);
   };
 
-  const handleVentaCreada = async () => {
+  const handleVentaCreada = async (ventaId) => {
     if (selectedConsulta) {
       await base44.entities.Consulta.update(selectedConsulta.id, {
         etapa: "Concretado",
@@ -85,6 +85,10 @@ export default function Pipeline() {
       });
       queryClient.invalidateQueries({ queryKey: ['consultas-pipeline'] });
       toast.success("Venta registrada y consulta marcada como Concretado");
+    }
+    // Forzar estado Finalizada para activar postventa
+    if (ventaId) {
+      await base44.entities.Venta.update(ventaId, { estado: "Finalizada" });
     }
     setShowVentaForm(false);
     setSelectedConsulta(null);
