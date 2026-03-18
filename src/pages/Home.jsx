@@ -78,7 +78,7 @@ export default function Home() {
   const tasaConversion = consultas.length > 0 ? ((concretados.length / consultas.length) * 100).toFixed(1) : 0;
 
   const ventasMesActual = ventas.filter(v => v.fecha && moment(v.fecha).isSame(today, 'month') && v.estado === "Finalizada");
-  const gananciaMensual = ventasMesActual.reduce((acc, v) => acc + (v.ganancia || 0), 0);
+  const gananciaMensualUSD = ventasMesActual.filter(v => (v.moneda || 'USD') !== 'ARS').reduce((acc, v) => acc + (v.ganancia || 0), 0);
 
   const seguimientosHoy = consultas.filter(c =>
     c.proximoSeguimiento &&
