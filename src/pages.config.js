@@ -52,7 +52,6 @@ import Configuracion from './pages/Configuracion';
 import ConfigurarPipeline from './pages/ConfigurarPipeline';
 import Consultas from './pages/Consultas';
 import Contactos from './pages/Contactos';
-import Dashboard from './pages/Dashboard';
 import EditorListaWhatsApp from './pages/EditorListaWhatsApp';
 import ExportarVentas from './pages/ExportarVentas';
 import Home from './pages/Home';
