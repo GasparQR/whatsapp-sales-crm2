@@ -19,14 +19,19 @@ export default function VentasDashboard() {
     enabled: !!workspace
   });
 
-  // KPIs Generales
-  const totalVentas = ventas.reduce((acc, v) => acc + (v.venta || 0), 0);
-  const totalGanancia = ventas.reduce((acc, v) => acc + (v.ganancia || 0), 0);
-  const cantidadVentas = ventas.length;
-  const gananciaPromedio = cantidadVentas > 0 ? totalGanancia / cantidadVentas : 0;
+  // Solo ventas en USD/USDT (excluir ARS)
+  const ventasUSD = ventas.filter(v => (v.moneda || 'USD') !== 'ARS');
+  const ventasARS = ventas.filter(v => v.moneda === 'ARS');
 
-  // Ganancia por Proveedor
-  const gananciasPorProveedor = ventas.reduce((acc, venta) => {
+  // KPIs Generales (USD)
+  const totalVentasUSD = ventasUSD.reduce((acc, v) => acc + (v.venta || 0), 0);
+  const totalGananciaUSD = ventasUSD.reduce((acc, v) => acc + (v.ganancia || 0), 0);
+  const totalGananciaARS = ventasARS.reduce((acc, v) => acc + (v.ganancia || 0), 0);
+  const cantidadVentas = ventas.length;
+  const gananciaPromedioUSD = ventasUSD.length > 0 ? totalGananciaUSD / ventasUSD.length : 0;
+
+  // Ganancia por Proveedor (solo USD)
+  const gananciasPorProveedor = ventasUSD.reduce((acc, venta) => {
     if (!venta.proveedorNombreSnapshot) return acc;
     if (!acc[venta.proveedorNombreSnapshot]) {
       acc[venta.proveedorNombreSnapshot] = 0;
@@ -39,14 +44,18 @@ export default function VentasDashboard() {
     .map(([proveedor, ganancia]) => ({ proveedor, ganancia }))
     .sort((a, b) => b.ganancia - a.ganancia);
 
-  // Ventas por Canal
+  // Ventas por Canal (cantidad solamente, sin mezclar montos)
   const ventasPorCanal = ventas.reduce((acc, venta) => {
     const canal = venta.marketplace || "Otro";
     if (!acc[canal]) {
-      acc[canal] = { cantidad: 0, monto: 0 };
+      acc[canal] = { cantidad: 0, montoUSD: 0, montoARS: 0 };
     }
     acc[canal].cantidad += 1;
-    acc[canal].monto += venta.venta || 0;
+    if ((venta.moneda || 'USD') !== 'ARS') {
+      acc[canal].montoUSD += venta.venta || 0;
+    } else {
+      acc[canal].montoARS += venta.venta || 0;
+    }
     return acc;
   }, {});
 
