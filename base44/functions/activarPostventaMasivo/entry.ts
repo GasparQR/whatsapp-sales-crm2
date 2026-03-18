@@ -20,7 +20,6 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    // Buscar ventas Finalizadas del último mes sin postventa activa
     const unMesAtras = new Date();
     unMesAtras.setMonth(unMesAtras.getMonth() - 1);
     const fechaLimite = unMesAtras.toISOString().split('T')[0];
@@ -28,11 +27,10 @@ Deno.serve(async (req) => {
     const ventas = await base44.asServiceRole.entities.Venta.filter({
       estado: 'Finalizada',
       postventaActiva: false
-    }, '-created_date', 500);
+    }, '-created_date', 200);
 
-    // Filtrar las del último mes
     const ventasDelMes = ventas.filter(v => {
-      const fechaVenta = v.fecha || v.created_date?.split('T')[0];
+      const fechaVenta = v.fecha || (v.created_date || '').split('T')[0];
       return fechaVenta >= fechaLimite;
     });
 
@@ -42,21 +40,26 @@ Deno.serve(async (req) => {
 
     const proximoSeguimiento = addBusinessDays(new Date(), 3);
 
-    // Actualizar cada venta
-    const resultados = await Promise.all(
-      ventasDelMes.map(v =>
-        base44.asServiceRole.entities.Venta.update(v.id, {
-          postventaActiva: true,
-          postventaPaso: 0,
-          postventaEstado: 'Pendiente',
-          proximoSeguimientoPostventa: proximoSeguimiento
-        })
-      )
-    );
+    // Procesar de a 5 para evitar timeout
+    let actualizadas = 0;
+    for (let i = 0; i < ventasDelMes.length; i += 5) {
+      const lote = ventasDelMes.slice(i, i + 5);
+      await Promise.all(
+        lote.map(v =>
+          base44.asServiceRole.entities.Venta.update(v.id, {
+            postventaActiva: true,
+            postventaPaso: 0,
+            postventaEstado: 'Pendiente',
+            proximoSeguimientoPostventa: proximoSeguimiento
+          })
+        )
+      );
+      actualizadas += lote.length;
+    }
 
     return Response.json({
       ok: true,
-      actualizadas: resultados.length,
+      actualizadas,
       ids: ventasDelMes.map(v => v.id)
     });
 
