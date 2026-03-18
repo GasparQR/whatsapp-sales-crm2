@@ -60,7 +60,7 @@ export default function VentasDashboard() {
   }, {});
 
   const dataCanales = Object.entries(ventasPorCanal)
-    .map(([canal, data]) => ({ canal, cantidad: data.cantidad, monto: data.monto }))
+    .map(([canal, data]) => ({ canal, cantidad: data.cantidad, montoUSD: data.montoUSD, montoARS: data.montoARS }))
     .sort((a, b) => b.cantidad - a.cantidad);
 
   // Top Modelos
