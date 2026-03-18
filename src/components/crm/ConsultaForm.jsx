@@ -127,7 +127,7 @@ export default function ConsultaForm({ open, onOpenChange, consulta, onSave }) {
     
     const dataToSave = {
       ...formData,
-      contactoNombre: contacto?.nombre,
+      contactoNombre: [contacto?.nombre, contacto?.apellido].filter(Boolean).join(" "),
       contactoWhatsapp: contacto?.whatsapp,
       presupuestoMax: formData.presupuestoMax ? Number(formData.presupuestoMax) : null,
       precioCotizado: formData.precioCotizado ? Number(formData.precioCotizado) : null,

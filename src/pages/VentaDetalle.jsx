@@ -176,7 +176,7 @@ export default function VentaDetalle() {
               </div>
               <div>
                 <p className="text-sm text-slate-600 mb-1">Cliente</p>
-                <p className="font-medium">{venta.nombreSnapshot}</p>
+                <p className="font-medium">{[venta.nombreSnapshot, venta.apellidoSnapshot].filter(Boolean).join(" ")}</p>
               </div>
               <div>
                 <p className="text-sm text-slate-600 mb-1">Producto</p>
@@ -281,7 +281,7 @@ export default function VentaDetalle() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-lg">{venta.nombreSnapshot}</p>
+                  <p className="font-medium text-lg">{[venta.nombreSnapshot, venta.apellidoSnapshot].filter(Boolean).join(" ")}</p>
                   {contacto.whatsapp && (
                     <p className="text-sm text-slate-600 flex items-center gap-2 mt-1">
                       <Phone className="w-4 h-4" />
