@@ -142,7 +142,7 @@ export default function Home() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <KPICard title="Leads últimos 7d" value={last7Days.length} subtitle={`${last30Days.length} en 30 días`} icon={Users} />
           <KPICard title="Tasa de conversión" value={`${tasaConversion}%`} subtitle={`${concretados.length} concretados`} icon={TrendingUp} />
-          <KPICard title="Ganancia Mensual" value={`$${gananciaMensual.toFixed(0)}`} subtitle={`${ventasMesActual.length} ventas`} icon={DollarSign} />
+          <KPICard title="Ganancia Mensual" value={`US$ ${gananciaMensualUSD.toFixed(2)}`} subtitle={`${ventasMesActual.length} ventas`} icon={DollarSign} />
           <KPICard title="Activos" value={activos.length} subtitle="En seguimiento" icon={Clock} />
           <KPICard title="Perdidos" value={perdidos.length} subtitle={`${((perdidos.length / (consultas.length || 1)) * 100).toFixed(0)}% del total`} icon={XCircle} />
         </div>
