@@ -50,12 +50,12 @@ export default function Pipeline() {
 
   const handleDragEnd = async (result) => {
     if (!result.destination) return;
-    
+
     const { draggableId, destination } = result;
     const newEtapa = destination.droppableId;
-    
-    updateMutation.mutate({ 
-      id: draggableId, 
+
+    updateMutation.mutate({
+      id: draggableId,
       data: { etapa: newEtapa }
     });
 
@@ -77,6 +77,15 @@ export default function Pipeline() {
     setShowVentaForm(true);
   };
 
+  // Nuevo: marcar como perdido directamente desde la card del pipeline
+  const handleMarcarPerdido = async (consulta, motivo) => {
+    await updateMutation.mutateAsync({
+      id: consulta.id,
+      data: { etapa: "Perdido", motivoPerdida: motivo }
+    });
+    toast.success(`Marcado como Perdido — ${motivo}`);
+  };
+
   const handleVentaCreada = async (ventaId) => {
     if (selectedConsulta) {
       await base44.entities.Consulta.update(selectedConsulta.id, {
@@ -86,7 +95,6 @@ export default function Pipeline() {
       queryClient.invalidateQueries({ queryKey: ['consultas-pipeline'] });
       toast.success("Venta registrada y consulta marcada como Concretado");
     }
-    // Forzar estado Finalizada para activar postventa
     if (ventaId) {
       await base44.entities.Venta.update(ventaId, { estado: "Finalizada" });
     }
@@ -177,6 +185,7 @@ export default function Pipeline() {
                 onWhatsApp={handleWhatsApp}
                 onEdit={handleEdit}
                 onConcretarVenta={handleConcretarVenta}
+                onMarcarPerdido={handleMarcarPerdido}
               />
             ))}
           </div>
