@@ -11,9 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { 
-  Plus, Search, MessageCircle, Calendar, CheckCircle2, XCircle, 
-  MoreHorizontal, Filter, Phone, ArrowUpDown, ArrowLeft, Trash2, ListCheck
+import {
+  Plus, Search, MessageCircle, Calendar, CheckCircle2, XCircle,
+  MoreHorizontal, ArrowUpDown, ArrowLeft, Trash2, ListCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import moment from "moment";
@@ -24,15 +24,7 @@ import DialogSelectorListasWhatsApp from "@/components/crm/DialogSelectorListasW
 import VentaForm from "@/components/ventas/VentaForm";
 import { toast } from "sonner";
 
-const etapaColors = {
-  Nuevo: "bg-blue-100 text-blue-700",
-  Respondido: "bg-cyan-100 text-cyan-700",
-  Seguimiento1: "bg-amber-100 text-amber-700",
-  Seguimiento2: "bg-orange-100 text-orange-700",
-  Negociacion: "bg-purple-100 text-purple-700",
-  Concretado: "bg-emerald-100 text-emerald-700",
-  Perdido: "bg-slate-100 text-slate-600"
-};
+const CANALES = ["Instagram", "WhatsApp", "MercadoLibre", "Referido", "Local", "Otro"];
 
 const prioridadColors = {
   Alta: "bg-red-50 text-red-700 border-red-200",
@@ -59,9 +51,23 @@ export default function Consultas() {
   const { data: currentUser } = useCurrentUser();
   const { workspace } = useWorkspace();
 
+  // Cargar TODAS las consultas (sin límite artificial)
   const { data: consultas = [], refetch, isLoading } = useQuery({
     queryKey: ['consultas-list', workspace?.id],
-    queryFn: () => workspace ? base44.entities.Consulta.filter({ workspace_id: workspace.id }, "-created_date", 500) : [],
+    queryFn: () => workspace
+      ? base44.entities.Consulta.filter({ workspace_id: workspace.id }, "-created_date", 2000)
+      : [],
+    enabled: !!workspace
+  });
+
+  // Cargar etapas activas del pipeline dinámicamente
+  const { data: etapasActivas = [] } = useQuery({
+    queryKey: ['pipeline-stages', workspace?.id],
+    queryFn: async () => {
+      if (!workspace) return [];
+      const stages = await base44.entities.PipelineStage.filter({ workspace_id: workspace.id }, "orden", 100);
+      return stages.filter(s => s.activa !== false);
+    },
     enabled: !!workspace
   });
 
@@ -79,6 +85,25 @@ export default function Consultas() {
       toast.success("Consulta eliminada");
     }
   });
+
+  // Colores dinámicos por etapa
+  const getEtapaColor = (etapaNombre) => {
+    const etapa = etapasActivas.find(e => e.nombre === etapaNombre);
+    const colorMap = {
+      "bg-blue-500": "bg-blue-100 text-blue-700",
+      "bg-cyan-500": "bg-cyan-100 text-cyan-700",
+      "bg-amber-500": "bg-amber-100 text-amber-700",
+      "bg-orange-500": "bg-orange-100 text-orange-700",
+      "bg-purple-500": "bg-purple-100 text-purple-700",
+      "bg-emerald-500": "bg-emerald-100 text-emerald-700",
+      "bg-slate-400": "bg-slate-100 text-slate-600",
+      "bg-red-500": "bg-red-100 text-red-700",
+      "bg-green-500": "bg-green-100 text-green-700",
+    };
+    if (etapa?.color) return colorMap[etapa.color] || "bg-slate-100 text-slate-700";
+    // fallback para etapas sin color configurado
+    return "bg-slate-100 text-slate-700";
+  };
 
   // Filtrar y ordenar
   const consultasFiltradas = consultas
@@ -122,7 +147,6 @@ export default function Consultas() {
   const handleMarcarConcretado = async (consulta) => {
     const ventasExistentes = await base44.entities.Venta.filter({ consultaId: consulta.id });
     if (ventasExistentes.length > 0) {
-      // Abrir venta existente para editar
       const ventaExistente = ventasExistentes[0];
       window.location.href = createPageUrl(`VentaDetalle?id=${ventaExistente.id}`);
       return;
@@ -171,7 +195,9 @@ export default function Consultas() {
                 </Button>
               </Link>
               <h1 className="text-2xl font-bold text-slate-900">Consultas</h1>
-              <p className="text-slate-500">{consultasFiltradas.length} resultados</p>
+              <p className="text-slate-500">
+                {isLoading ? "Cargando..." : `${consultasFiltradas.length} de ${consultas.length} consultas`}
+              </p>
             </div>
             {currentUser?.canEditContacts && (
               <Button onClick={() => { setSelectedConsulta(null); setShowForm(true); }} className="gap-2">
@@ -192,34 +218,38 @@ export default function Consultas() {
                 className="pl-9"
               />
             </div>
+
+            {/* Filtro de etapas DINÁMICO desde el pipeline activo */}
             <Select value={filtroEtapa} onValueChange={setFiltroEtapa}>
-              <SelectTrigger className="w-36">
+              <SelectTrigger className="w-40">
                 <SelectValue placeholder="Etapa" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">Todas las etapas</SelectItem>
-                <SelectItem value="Nuevo">Nuevo</SelectItem>
-                <SelectItem value="Respondido">Respondido</SelectItem>
-                <SelectItem value="Seguimiento1">Seguimiento 1</SelectItem>
-                <SelectItem value="Seguimiento2">Seguimiento 2</SelectItem>
-                <SelectItem value="Negociacion">Negociación</SelectItem>
-                <SelectItem value="Concretado">Concretado</SelectItem>
-                <SelectItem value="Perdido">Perdido</SelectItem>
+                {etapasActivas.map(etapa => (
+                  <SelectItem key={etapa.nombre} value={etapa.nombre}>
+                    {etapa.nombre}
+                  </SelectItem>
+                ))}
+                {/* Siempre incluir Perdido como opción especial */}
+                {!etapasActivas.find(e => e.nombre === "Perdido") && (
+                  <SelectItem value="Perdido">Perdido</SelectItem>
+                )}
               </SelectContent>
             </Select>
+
             <Select value={filtroCanal} onValueChange={setFiltroCanal}>
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="Canal" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">Todos los canales</SelectItem>
-                <SelectItem value="Instagram">Instagram</SelectItem>
-                <SelectItem value="WhatsApp">WhatsApp</SelectItem>
-                <SelectItem value="MercadoLibre">MercadoLibre</SelectItem>
-                <SelectItem value="Referido">Referido</SelectItem>
-                <SelectItem value="Local">Local</SelectItem>
+                {CANALES.map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
+
             <Select value={filtroPrioridad} onValueChange={setFiltroPrioridad}>
               <SelectTrigger className="w-32">
                 <SelectValue placeholder="Prioridad" />
@@ -243,7 +273,7 @@ export default function Consultas() {
               <TableRow className="bg-slate-50/50">
                 <TableHead className="font-semibold">Contacto</TableHead>
                 <TableHead className="font-semibold">Producto</TableHead>
-                <TableHead 
+                <TableHead
                   className="font-semibold cursor-pointer hover:bg-slate-100"
                   onClick={() => toggleSort("precioCotizado")}
                 >
@@ -258,163 +288,171 @@ export default function Consultas() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {consultasFiltradas.map(consulta => {
-                const seguimientoVencido = consulta.proximoSeguimiento && 
-                  moment(consulta.proximoSeguimiento).isBefore(moment(), 'day');
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-12 text-slate-400">
+                    Cargando consultas...
+                  </TableCell>
+                </TableRow>
+              ) : (
+                consultasFiltradas.map(consulta => {
+                  const seguimientoVencido = consulta.proximoSeguimiento &&
+                    moment(consulta.proximoSeguimiento).isBefore(moment(), 'day');
 
-                return (
-                  <TableRow 
-                    key={consulta.id} 
-                    className="cursor-pointer hover:bg-slate-50"
-                    onClick={() => {
-                      setSelectedConsulta(consulta);
-                      setShowDetalleDialog(true);
-                    }}
-                  >
-                    <TableCell>
-                      <div>
-                        <p className="font-medium text-slate-900">{consulta.contactoNombre}</p>
-                        <p className="text-sm text-slate-500">{consulta.contactoWhatsapp}</p>
-                        <div className="flex gap-1 mt-1">
-                          {consulta.canalOrigen && (
-                            <Badge variant="secondary" className="text-xs">
-                              {consulta.canalOrigen}
+                  return (
+                    <TableRow
+                      key={consulta.id}
+                      className="cursor-pointer hover:bg-slate-50"
+                      onClick={() => {
+                        setSelectedConsulta(consulta);
+                        setShowDetalleDialog(true);
+                      }}
+                    >
+                      <TableCell>
+                        <div>
+                          <p className="font-medium text-slate-900">{consulta.contactoNombre}</p>
+                          <p className="text-sm text-slate-500">{consulta.contactoWhatsapp}</p>
+                          <div className="flex gap-1 mt-1">
+                            {consulta.canalOrigen && (
+                              <Badge variant="secondary" className="text-xs">
+                                {consulta.canalOrigen}
+                              </Badge>
+                            )}
+                            <Badge variant="outline" className={cn("text-xs", prioridadColors[consulta.prioridad])}>
+                              {consulta.prioridad}
                             </Badge>
-                          )}
-                          <Badge variant="outline" className={cn("text-xs", prioridadColors[consulta.prioridad])}>
-                            {consulta.prioridad}
-                          </Badge>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <p className="font-medium">{consulta.productoConsultado}</p>
-                      {consulta.variante && (
-                        <p className="text-sm text-slate-500">{consulta.variante}</p>
-                      )}
-                      {consulta.categoriaProducto && (
-                        <Badge variant="secondary" className="text-xs mt-1">
-                          {consulta.categoriaProducto}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {consulta.precioCotizado ? (
-                        <p className="font-bold">
-                          {consulta.moneda === "USD" ? "US$" : "$"} {consulta.precioCotizado.toLocaleString()}
-                        </p>
-                      ) : (
-                        <span className="text-slate-400">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={etapaColors[consulta.etapa]}>
-                        {consulta.etapa}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {consulta.proximoSeguimiento ? (
-                        <div className={cn(
-                          "flex items-center gap-1 text-sm",
-                          seguimientoVencido ? "text-red-600" : "text-slate-600"
-                        )}>
-                          <Calendar className="w-3.5 h-3.5" />
-                          {moment(consulta.proximoSeguimiento).format("DD/MM")}
-                          {seguimientoVencido && <span className="text-xs">(vencido)</span>}
-                        </div>
-                      ) : (
-                        <span className="text-slate-400">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex items-center justify-end gap-1">
-                        {currentUser?.canSendMessages && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleWhatsApp(consulta)}
-                            className="bg-[#25D366] hover:bg-[#20bd5a] text-white h-8 w-8 p-0"
-                          >
-                            <MessageCircle className="w-4 h-4" />
-                          </Button>
+                      </TableCell>
+                      <TableCell>
+                        <p className="font-medium">{consulta.productoConsultado}</p>
+                        {consulta.variante && (
+                          <p className="text-sm text-slate-500">{consulta.variante}</p>
                         )}
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <MoreHorizontal className="w-4 h-4" />
+                        {consulta.categoriaProducto && (
+                          <Badge variant="secondary" className="text-xs mt-1">
+                            {consulta.categoriaProducto}
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {consulta.precioCotizado ? (
+                          <p className="font-bold">
+                            {consulta.moneda === "USD" ? "US$" : "$"} {consulta.precioCotizado.toLocaleString()}
+                          </p>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge className={getEtapaColor(consulta.etapa)}>
+                          {consulta.etapa}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {consulta.proximoSeguimiento ? (
+                          <div className={cn(
+                            "flex items-center gap-1 text-sm",
+                            seguimientoVencido ? "text-red-600" : "text-slate-600"
+                          )}>
+                            <Calendar className="w-3.5 h-3.5" />
+                            {moment(consulta.proximoSeguimiento).format("DD/MM")}
+                            {seguimientoVencido && <span className="text-xs">(vencido)</span>}
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-end gap-1">
+                          {currentUser?.canSendMessages && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleWhatsApp(consulta)}
+                              className="bg-[#25D366] hover:bg-[#20bd5a] text-white h-8 w-8 p-0"
+                            >
+                              <MessageCircle className="w-4 h-4" />
                             </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedConsulta(consulta);
-                              setShowListasDialog(true);
-                            }}>
-                              <ListCheck className="w-4 h-4 mr-2" />
-                              Enviar Lista WhatsApp
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => handleSeguimiento(consulta, 1)}>
-                              <Calendar className="w-4 h-4 mr-2" />
-                              Seguimiento mañana
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleSeguimiento(consulta, 3)}>
-                              <Calendar className="w-4 h-4 mr-2" />
-                              Seguimiento en 3 días
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleSeguimiento(consulta, 7)}>
-                              <Calendar className="w-4 h-4 mr-2" />
-                              Seguimiento en 1 semana
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => handleMarcarConcretado(consulta)}
-                              className="text-emerald-600"
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-2" />
-                              Marcar concretado
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => handleMarcarPerdido(consulta, "Caro")}
-                              className="text-red-600"
-                            >
-                              <XCircle className="w-4 h-4 mr-2" />
-                              Perdido - Caro
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleMarcarPerdido(consulta, "NoResponde")}
-                              className="text-red-600"
-                            >
-                              <XCircle className="w-4 h-4 mr-2" />
-                              Perdido - No responde
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => handleMarcarPerdido(consulta, "ComproOtro")}
-                              className="text-red-600"
-                            >
-                              <XCircle className="w-4 h-4 mr-2" />
-                              Perdido - Compró otro
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem 
-                              onClick={() => {
-                                if (window.confirm("¿Estás seguro de eliminar esta consulta?")) {
-                                  deleteMutation.mutate(consulta.id);
-                                }
-                              }}
-                              className="text-red-600"
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Eliminar consulta
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {consultasFiltradas.length === 0 && (
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                <MoreHorizontal className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedConsulta(consulta);
+                                setShowListasDialog(true);
+                              }}>
+                                <ListCheck className="w-4 h-4 mr-2" />
+                                Enviar Lista WhatsApp
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleSeguimiento(consulta, 1)}>
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Seguimiento mañana
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleSeguimiento(consulta, 3)}>
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Seguimiento en 3 días
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleSeguimiento(consulta, 7)}>
+                                <Calendar className="w-4 h-4 mr-2" />
+                                Seguimiento en 1 semana
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleMarcarConcretado(consulta)}
+                                className="text-emerald-600"
+                              >
+                                <CheckCircle2 className="w-4 h-4 mr-2" />
+                                Marcar concretado
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => handleMarcarPerdido(consulta, "Caro")}
+                                className="text-red-600"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Perdido - Caro
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleMarcarPerdido(consulta, "NoResponde")}
+                                className="text-red-600"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Perdido - No responde
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => handleMarcarPerdido(consulta, "ComproOtro")}
+                                className="text-red-600"
+                              >
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Perdido - Compró otro
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  if (window.confirm("¿Estás seguro de eliminar esta consulta?")) {
+                                    deleteMutation.mutate(consulta.id);
+                                  }
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Eliminar consulta
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+              {!isLoading && consultasFiltradas.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12 text-slate-400">
                     No hay consultas que coincidan con los filtros
