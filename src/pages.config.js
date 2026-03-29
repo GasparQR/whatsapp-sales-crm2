@@ -95,6 +95,7 @@ export const PAGES = {
     "VentaDetalle": VentaDetalle,
     "Ventas": Ventas,
     "VentasDashboard": VentasDashboard,
+    "InteligenciaNegocio": InteligenciaNegocio,
 }
 
 export const pagesConfig = {
