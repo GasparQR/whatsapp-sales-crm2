@@ -9,17 +9,6 @@ import { MessageCircle, Copy, ExternalLink, Check, Sparkles } from "lucide-react
 import { base44 } from "@/api/base44Client";
 import { toast } from "sonner";
 
-function addBusinessDays(date, days) {
-  const result = new Date(date);
-  let added = 0;
-  while (added < days) {
-    result.setDate(result.getDate() + 1);
-    const d = result.getDay();
-    if (d !== 0 && d !== 6) added++;
-  }
-  return result.toISOString().split('T')[0];
-}
-
 export default function PostventaWhatsAppSender({ open, onOpenChange, venta, contactoWhatsapp, onMessageSent }) {
   const [plantillas, setPlantillas] = useState([]);
   const [variablesDB, setVariablesDB] = useState([]);
@@ -88,28 +77,15 @@ export default function PostventaWhatsAppSender({ open, onOpenChange, venta, con
     window.open(url.toString(), "_blank", "noopener,noreferrer");
   };
 
+  // UN SOLO PASO: marcar como enviado = cerrar postventa
   const handleMarkSent = async () => {
     setLoading(true);
-    const paso = venta.postventaPaso || 0;
-
-    let updates;
-    if (paso === 0) {
-      updates = {
-        postventaUltimoContacto: new Date().toISOString(),
-        postventaEstado: 'Enviado',
-        postventaPaso: 1,
-        proximoSeguimientoPostventa: addBusinessDays(new Date(), 7)
-      };
-    } else {
-      updates = {
-        postventaUltimoContacto: new Date().toISOString(),
-        postventaEstado: 'Cerrado',
-        postventaActiva: false
-      };
-    }
-
-    await base44.entities.Venta.update(venta.id, updates);
-    toast.success(paso === 0 ? "Enviado. Próximo contacto en 7 días hábiles." : "Postventa cerrada.");
+    await base44.entities.Venta.update(venta.id, {
+      postventaUltimoContacto: new Date().toISOString(),
+      postventaEstado: "Cerrado",
+      postventaActiva: false,
+    });
+    toast.success("✅ Postventa completada. Proceso de venta finalizado.");
     setLoading(false);
     onMessageSent?.();
     onOpenChange(false);
@@ -133,7 +109,6 @@ export default function PostventaWhatsAppSender({ open, onOpenChange, venta, con
             <p className="text-sm text-slate-500">{contactoWhatsapp || "Sin número registrado"}</p>
             <div className="flex gap-2 mt-2 flex-wrap">
               <Badge variant="secondary">{venta.productoSnapshot || venta.modelo}</Badge>
-              <Badge variant="outline">Paso {(venta.postventaPaso || 0) + 1} de 2</Badge>
               {venta.ganancia != null && (
                 <Badge className="bg-emerald-100 text-emerald-700">
                   {venta.moneda} {venta.ganancia?.toFixed(0)} ganancia
@@ -150,15 +125,11 @@ export default function PostventaWhatsAppSender({ open, onOpenChange, venta, con
               </Label>
               <Select
                 value={selectedPlantilla?.id}
-                onValueChange={(val) => setSelectedPlantilla(plantillas.find(p => p.id === val))}
+                onValueChange={val => setSelectedPlantilla(plantillas.find(p => p.id === val))}
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar plantilla" />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Seleccionar plantilla" /></SelectTrigger>
                 <SelectContent>
-                  {plantillas.map(p => (
-                    <SelectItem key={p.id} value={p.id}>{p.nombrePlantilla}</SelectItem>
-                  ))}
+                  {plantillas.map(p => <SelectItem key={p.id} value={p.id}>{p.nombrePlantilla}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -168,7 +139,7 @@ export default function PostventaWhatsAppSender({ open, onOpenChange, venta, con
             <Label>Mensaje</Label>
             <Textarea
               value={mensaje}
-              onChange={(e) => setMensaje(e.target.value)}
+              onChange={e => setMensaje(e.target.value)}
               rows={6}
               className="resize-none"
               placeholder="Escribe tu mensaje..."
@@ -191,7 +162,7 @@ export default function PostventaWhatsAppSender({ open, onOpenChange, venta, con
           </Button>
           <Button onClick={handleMarkSent} disabled={loading} className="gap-2">
             <Check className="w-4 h-4" />
-            {(venta.postventaPaso || 0) === 0 ? "Enviado (→ Paso 2)" : "Marcar y Cerrar"}
+            Marcar como realizado
           </Button>
         </DialogFooter>
       </DialogContent>
