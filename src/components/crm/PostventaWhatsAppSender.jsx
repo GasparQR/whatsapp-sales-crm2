@@ -37,7 +37,7 @@ export default function PostventaWhatsAppSender({ open, onOpenChange, venta, con
         : base44.entities.VariablePlantilla.list()
     ]);
     setVariablesDB(vars);
-    const postventa = allPlantillas.filter(p => p.etapa === 'Postventa');
+    const postventa = allPlantillas.filter(p => p.etapa === 'Concretado');
     const lista = postventa.length > 0 ? postventa : allPlantillas;
     setPlantillas(lista);
     if (lista.length > 0) setSelectedPlantilla(lista[0]);
